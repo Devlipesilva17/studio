@@ -1,3 +1,52 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "pool-hero",
+      "description": "A beautiful modern swimming pool at dusk.",
+      "imageUrl": "https://images.unsplash.com/photo-1758448501014-3a6068fb9d51?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtb2Rlcm4lMjBwb29sfGVufDB8fHx8MTc2MzQyMzIzOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "modern pool"
+    },
+    {
+      "id": "pool-before",
+      "description": "A swimming pool with some algae and leaves.",
+      "imageUrl": "https://images.unsplash.com/photo-1710584532171-b616deb1c422?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxkaXJ0eSUyMHBvb2x8ZW58MHx8fHwxNzYzNDIzMjM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "dirty pool"
+    },
+    {
+      "id": "pool-after",
+      "description": "A crystal clear clean swimming pool.",
+      "imageUrl": "https://images.unsplash.com/photo-1646318714664-bb7be3ad3dc2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjbGVhbiUyMHBvb2x8ZW58MHx8fHwxNzYzNDIzMjM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "clean pool"
+    },
+    {
+      "id": "client-avatar-1",
+      "description": "Avatar for a client.",
+      "imageUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjMzODMwNzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "client-avatar-2",
+      "description": "Avatar for another client.",
+      "imageUrl": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjMzODMwNzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "client-avatar-3",
+      "description": "Avatar for a third client.",
+      "imageUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjMzODMwNzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "client-avatar-4",
+      "description": "Avatar for a fourth client.",
+      "imageUrl": "https://images.unsplash.com/photo-1557053910-d9eadeed1c58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8MTc2MzMyODY5NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman portrait"
+    },
+    {
+      "id": "client-avatar-5",
+      "description": "Avatar for a fifth client.",
+      "imageUrl": "https://images.unsplash.com/photo-1560250097-0b93528c311a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtYW4lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjMzNzc5Mjh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "man portrait"
+    }
+  ]
 }

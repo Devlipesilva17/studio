@@ -1,0 +1,21 @@
+{
+  "name": "PoolCare Pro",
+  "short_name": "PoolCare",
+  "description": "Complete pool maintenance management.",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EDF2F4",
+  "theme_color": "#468B97"
+}
