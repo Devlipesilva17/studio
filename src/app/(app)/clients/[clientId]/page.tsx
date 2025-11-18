@@ -247,6 +247,8 @@ export default function ClientDetailsPage({
     if (averageDepth <= 0) return 0;
     
     let volumeM3 = 0;
+    const OVAL_CIRCULAR_FACTOR = 0.785; // PI / 4
+    
     switch(type) {
         case 'quadrilateral':
             if (length > 0 && width > 0) {
@@ -255,13 +257,12 @@ export default function ClientDetailsPage({
             break;
         case 'circular':
             if (length > 0) { // diameter
-                const radius = length / 2;
-                volumeM3 = Math.PI * Math.pow(radius, 2) * averageDepth;
+                volumeM3 = Math.pow(length, 2) * averageDepth * OVAL_CIRCULAR_FACTOR;
             }
             break;
         case 'oval':
              if (length > 0 && width > 0) {
-                volumeM3 = (Math.PI * length * width / 4) * averageDepth;
+                volumeM3 = length * width * averageDepth * OVAL_CIRCULAR_FACTOR;
              }
             break;
     }
@@ -605,5 +606,7 @@ export default function ClientDetailsPage({
     </Form>
   );
 }
+
+    
 
     
