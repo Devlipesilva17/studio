@@ -96,12 +96,12 @@ const fullClientProfileSchema = z.object({
 
 
 export default function ClientDetailsPage({
-  params,
+  params: { clientId },
 }: {
   params: { clientId: string };
 }) {
   const router = useRouter();
-  const { clientId } = params;
+
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -260,7 +260,6 @@ export default function ClientDetailsPage({
         }
         break;
       case 'circular':
-         // For circular, length is diameter1, width is diameter2. If width is empty, it's a circle.
         const diameter = length > 0 ? length : 0;
         if (diameter > 0) {
            volumeM3 = diameter * diameter * averageDepth * OVAL_CIRCULAR_FACTOR;
@@ -532,7 +531,6 @@ export default function ClientDetailsPage({
                     <RadioGroup
                       onValueChange={(value) => {
                         field.onChange(value);
-                        // Reset other fields when type changes to avoid incorrect calculations
                         form.setValue('poolDimensions.length', undefined);
                         form.setValue('poolDimensions.width', undefined);
                       }}
@@ -570,13 +568,12 @@ export default function ClientDetailsPage({
               )}
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-              {/* Comprimento ou Diâmetro */}
               <FormField
                 control={form.control}
                 name="poolDimensions.length"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{watchedPoolType === "circular" ? "Diâmetro" : "Comprimento"}</FormLabel>
+                    <FormLabel>{watchedPoolType === 'circular' ? 'Diâmetro' : 'Comprimento'}</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.1" placeholder="0" {...field} />
                     </FormControl>
@@ -584,9 +581,7 @@ export default function ClientDetailsPage({
                   </FormItem>
                 )}
               />
-
-              {/* Largura (exceto para circular) */}
-              {watchedPoolType !== "circular" && (
+              {watchedPoolType !== 'circular' && (
                 <FormField
                   control={form.control}
                   name="poolDimensions.width"
@@ -601,8 +596,6 @@ export default function ClientDetailsPage({
                   )}
                 />
               )}
-
-              {/* Profundidade Média */}
               <FormField
                 control={form.control}
                 name="poolDimensions.averageDepth"
@@ -616,10 +609,8 @@ export default function ClientDetailsPage({
                   </FormItem>
                 )}
               />
-              
-              {/* Litragem */}
               <FormItem>
-                <FormLabel>Litragem (L)</FormLabel>
+                <FormLabel>Litragem</FormLabel>
                 <FormControl>
                   <Input
                     type="text"
