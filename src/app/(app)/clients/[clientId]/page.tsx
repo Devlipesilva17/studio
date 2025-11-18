@@ -23,13 +23,14 @@ export default function ClientDetailsPage({
 }: {
   params: { clientId: string };
 }) {
+  const { clientId } = params;
   const { user } = useUser();
   const firestore = useFirestore();
 
   const clientRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
-    return doc(firestore, `users/${user.uid}/clients`, params.clientId);
-  }, [firestore, user, params.clientId]);
+    return doc(firestore, `users/${user.uid}/clients`, clientId);
+  }, [firestore, user, clientId]);
 
   const { data: client, isLoading } = useDoc<Client>(clientRef);
 
