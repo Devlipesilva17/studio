@@ -1,13 +1,14 @@
 
+
 export type Client = {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  address: string;
+  email?: string;
+  phone?: string;
+  address?: string;
   neighborhood: string;
   createdAt: string; // ISO 8601 date string
-  avatarUrl: string;
+  avatarUrl?: string;
   notes?: string;
   startDate?: string;
   poolIds?: string[];
@@ -31,10 +32,10 @@ export type Pool = {
   waterQuality?: 'green' | 'cloudy' | 'crystal-clear';
   filterType?: 'sand' | 'cartridge' | 'polyester';
   lastFilterChange?: string; // ISO 8601 date string
-  nextFilterChange?: string; // ISO 8601 date string
   filterPressure?: number;
   filterCapacity?: number;
-  size: number; // in gallons
+  // Deprecated fields, kept for compatibility, but should be calculated.
+  size?: number; 
   lastTreatment?: string;
 };
 
@@ -66,3 +67,5 @@ export type Payment = {
   date: string; // ISO 8601 date string
   status: 'paid' | 'pending';
 };
+
+    

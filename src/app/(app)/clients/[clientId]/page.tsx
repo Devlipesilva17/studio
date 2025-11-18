@@ -3,9 +3,9 @@
 
 import * as React from 'react';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
-import { doc, collection, query, where, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, query, setDoc, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Client, Pool } from '@/lib/types';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -16,12 +16,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Edit, Phone, Mail, MapPin, Save, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -29,6 +28,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 
 const clientFormSchema = z.object({
@@ -63,18 +63,28 @@ const poolPropertiesSchema = z.object({
 const filterDataSchema = z.object({
     filterType: z.enum(['sand', 'cartridge', 'polyester']).default('sand'),
     lastFilterChange: z.string().optional(),
-    nextFilterChange: z.string().optional(),
     filterPressure: z.coerce.number().optional(),
     filterCapacity: z.coerce.number().optional(),
 });
 
+const fullClientProfileSchema = z.object({
+    client: clientFormSchema,
+    poolDimensions: poolDimensionsSchema,
+    chemicalData: chemicalDataSchema,
+    poolProperties: poolPropertiesSchema,
+    filterData: filterDataSchema,
+});
+
 
 export default function ClientDetailsPage({
-  params,
+  params: routeParams,
 }: {
   params: { clientId: string };
 }) {
+  const router = useRouter();
+  const params = React.use(Promise.resolve(routeParams));
   const { clientId } = params;
+
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -96,20 +106,14 @@ export default function ClientDetailsPage({
   const pool = pools?.[0]; // For now, we edit the first pool
 
   // Form setup
-  const form = useForm({
-    resolver: zodResolver(z.object({
-      client: clientFormSchema,
-      poolDimensions: poolDimensionsSchema,
-      chemicalData: chemicalDataSchema,
-      poolProperties: poolPropertiesSchema,
-      filterData: filterDataSchema,
-    })),
+  const form = useForm<z.infer<typeof fullClientProfileSchema>>({
+    resolver: zodResolver(fullClientProfileSchema),
     defaultValues: {
         client: { name: '', phone: '', address: '', startDate: '', notes: '' },
         poolDimensions: { type: 'quadrilateral', length: 0, width: 0, averageDepth: 0 },
-        chemicalData: { ph: 0, chlorine: 0, alkalinity: 0, calciumHardness: 0 },
+        chemicalData: { ph: 7.2, chlorine: 1, alkalinity: 80, calciumHardness: 200 },
         poolProperties: { material: 'fiber', hasStains: false, hasScale: false, waterQuality: 'crystal-clear' },
-        filterData: { filterType: 'sand', lastFilterChange: '', nextFilterChange: '', filterPressure: 0, filterCapacity: 0 }
+        filterData: { filterType: 'sand', lastFilterChange: '', filterPressure: 0, filterCapacity: 0 }
     }
   });
   
@@ -130,10 +134,10 @@ export default function ClientDetailsPage({
             averageDepth: pool?.averageDepth || 0,
           },
           chemicalData: {
-            ph: pool?.ph || 0,
-            chlorine: pool?.chlorine || 0,
-            alkalinity: pool?.alkalinity || 0,
-            calciumHardness: pool?.calciumHardness || 0,
+            ph: pool?.ph || 7.2,
+            chlorine: pool?.chlorine || 1.0,
+            alkalinity: pool?.alkalinity || 80,
+            calciumHardness: pool?.calciumHardness || 200,
           },
           poolProperties: {
             material: pool?.material || 'fiber',
@@ -144,7 +148,6 @@ export default function ClientDetailsPage({
           filterData: {
             filterType: pool?.filterType || 'sand',
             lastFilterChange: pool?.lastFilterChange ? new Date(pool.lastFilterChange).toISOString().split('T')[0] : '',
-            nextFilterChange: pool?.nextFilterChange ? new Date(pool.nextFilterChange).toISOString().split('T')[0] : '',
             filterPressure: pool?.filterPressure || 0,
             filterCapacity: pool?.filterCapacity || 0,
           }
@@ -157,25 +160,39 @@ export default function ClientDetailsPage({
     resetForms();
   }, [client, pool, resetForms]);
 
-  const onSubmit = async (data: z.infer<typeof form.control.schema>) => {
-      if (!clientRef || !pool?.id || !user || !firestore) {
-          toast({ variant: 'destructive', title: 'Erro', description: 'Cliente ou piscina não carregado.' });
+  const onSubmit = async (data: z.infer<typeof fullClientProfileSchema>) => {
+      if (!clientRef || !user || !firestore) {
+          toast({ variant: 'destructive', title: 'Erro', description: 'Usuário ou cliente não carregado.' });
           return;
       }
       setIsSaving(true);
       try {
-          const clientUpdateData = { ...data.client };
-          await updateDoc(clientRef, clientUpdateData);
-
-          const poolRef = doc(firestore, `users/${user.uid}/clients/${clientId}/pools`, pool.id);
-          const poolUpdateData = {
-              ...data.poolDimensions,
-              ...data.chemicalData,
-              ...data.poolProperties,
-              ...data.filterData,
-              updatedAt: serverTimestamp(),
+          // --- Update Client Data ---
+          await updateDoc(clientRef, data.client);
+          
+          // --- Update or Create Pool Data ---
+          const poolData = {
+            clientId: clientId,
+            ...data.poolDimensions,
+            ...data.chemicalData,
+            ...data.poolProperties,
+            ...data.filterData,
+            updatedAt: serverTimestamp(),
           };
-          await updateDoc(poolRef, poolUpdateData);
+          
+          if (pool?.id) {
+              // Update existing pool
+              const poolRef = doc(firestore, `users/${user.uid}/clients/${clientId}/pools`, pool.id);
+              await updateDoc(poolRef, poolData);
+          } else {
+              // Create new pool
+              const poolsCollectionRef = collection(firestore, `users/${user.uid}/clients/${clientId}/pools`);
+              await addDoc(poolsCollectionRef, {
+                  ...poolData,
+                  createdAt: serverTimestamp(),
+                  name: "Piscina Principal", // Default name for new pool
+              });
+          }
 
           toast({ title: "Sucesso!", description: "Ficha do cliente atualizada." });
       } catch (error) {
@@ -283,128 +300,115 @@ export default function ClientDetailsPage({
             </CardContent>
         </Card>
 
-        {pool ? (
-            <>
-            {/* METRAGENS E DIMENSÕES */}
-            <Card>
-                <CardHeader><CardTitle>Metragens e Dimensões</CardTitle></CardHeader>
-                <CardContent className="space-y-6">
-                    <FormField control={form.control} name="poolDimensions.type" render={({ field }) => (
-                        <FormItem><FormLabel>Tipo da Piscina</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4">
-                            <FormItem><FormControl><RadioGroupItem value="quadrilateral" id="quadrilateral" /></FormControl><FormLabel htmlFor="quadrilateral" className="ml-2">Quadrilateral</FormLabel></FormItem>
-                            <FormItem><FormControl><RadioGroupItem value="circular" id="circular" /></FormControl><FormLabel htmlFor="circular" className="ml-2">Circular</FormLabel></FormItem>
-                            <FormItem><FormControl><RadioGroupItem value="oval" id="oval" /></FormControl><FormLabel htmlFor="oval" className="ml-2">Oval</FormLabel></FormItem>
-                        </RadioGroup></FormControl><FormMessage /></FormItem>
+        {/* METRAGENS E DIMENSÕES */}
+        <Card>
+            <CardHeader><CardTitle>Dados da Piscina: Metragens e Dimensões</CardTitle></CardHeader>
+            <CardContent className="space-y-6">
+                <FormField control={form.control} name="poolDimensions.type" render={({ field }) => (
+                    <FormItem><FormLabel>Tipo da Piscina</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4">
+                        <FormItem><FormControl><RadioGroupItem value="quadrilateral" id="quadrilateral" /></FormControl><FormLabel htmlFor="quadrilateral" className="ml-2">Quadrilateral</FormLabel></FormItem>
+                        <FormItem><FormControl><RadioGroupItem value="circular" id="circular" /></FormControl><FormLabel htmlFor="circular" className="ml-2">Circular</FormLabel></FormItem>
+                        <FormItem><FormControl><RadioGroupItem value="oval" id="oval" /></FormControl><FormLabel htmlFor="oval" className="ml-2">Oval</FormLabel></FormItem>
+                    </RadioGroup></FormControl><FormMessage /></FormItem>
+                )} />
+                 <div className="grid md:grid-cols-3 gap-6">
+                    <FormField control={form.control} name="poolDimensions.length" render={({ field }) => (
+                        <FormItem><FormLabel>Comprimento / Diâmetro (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                     <div className="grid md:grid-cols-3 gap-6">
-                        <FormField control={form.control} name="poolDimensions.length" render={({ field }) => (
-                            <FormItem><FormLabel>Comprimento / Diâmetro</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name="poolDimensions.width" render={({ field }) => (
-                            <FormItem><FormLabel>Largura / Diâmetro</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name="poolDimensions.averageDepth" render={({ field }) => (
-                            <FormItem><FormLabel>Profundidade Média</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                    </div>
-                </CardContent>
-            </Card>
+                    <FormField control={form.control} name="poolDimensions.width" render={({ field }) => (
+                        <FormItem><FormLabel>Largura (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="poolDimensions.averageDepth" render={({ field }) => (
+                        <FormItem><FormLabel>Profundidade Média (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                </div>
+            </CardContent>
+        </Card>
 
-            {/* DADOS QUÍMICOS E TÉCNICOS */}
-            <Card>
-                <CardHeader><CardTitle>Dados Químicos e Técnicos</CardTitle></CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Parâmetro</TableHead>
-                                <TableHead>Indicador Ideal</TableHead>
-                                <TableHead className="w-[200px]">Indicador Atual</TableHead>
+        {/* DADOS QUÍMICOS E TÉCNICOS */}
+        <Card>
+            <CardHeader><CardTitle>Dados Químicos e Técnicos</CardTitle></CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Parâmetro</TableHead>
+                            <TableHead>Indicador Ideal</TableHead>
+                            <TableHead className="w-[200px]">Indicador Atual</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {chemicalParams.map(param => (
+                            <TableRow key={param.name}>
+                                <TableCell className="font-medium">{param.name}</TableCell>
+                                <TableCell>{param.ideal}</TableCell>
+                                <TableCell>
+                                    <FormField control={form.control} name={param.formKey as any} render={({ field }) => (
+                                        <FormItem><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                </TableCell>
                             </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {chemicalParams.map(param => (
-                                <TableRow key={param.name}>
-                                    <TableCell className="font-medium">{param.name}</TableCell>
-                                    <TableCell>{param.ideal}</TableCell>
-                                    <TableCell>
-                                        <FormField control={form.control} name={param.formKey as any} render={({ field }) => (
-                                            <FormItem><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
-                                        )} />
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
 
-            {/* PROPRIEDADES DA PISCINA */}
-            <Card>
-                <CardHeader><CardTitle>Propriedades da Piscina</CardTitle></CardHeader>
-                <CardContent className="grid md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="poolProperties.material" render={({ field }) => (
-                        <FormItem><FormLabel>Material</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4">
-                            <FormItem><FormControl><RadioGroupItem value="fiber" id="fiber" /></FormControl><FormLabel htmlFor="fiber" className="ml-2">Fibra</FormLabel></FormItem>
-                            <FormItem><FormControl><RadioGroupItem value="masonry" id="masonry" /></FormControl><FormLabel htmlFor="masonry" className="ml-2">Alvenaria</FormLabel></FormItem>
-                            <FormItem><FormControl><RadioGroupItem value="vinyl" id="vinyl" /></FormControl><FormLabel htmlFor="vinyl" className="ml-2">Vinil</FormLabel></FormItem>
-                        </RadioGroup></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="poolProperties.waterQuality" render={({ field }) => (
-                         <FormItem><FormLabel>Qualidade da Água</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4">
-                            <FormItem><FormControl><RadioGroupItem value="green" id="green" /></FormControl><FormLabel htmlFor="green" className="ml-2">Verde</FormLabel></FormItem>
-                            <FormItem><FormControl><RadioGroupItem value="cloudy" id="cloudy" /></FormControl><FormLabel htmlFor="cloudy" className="ml-2">Turva</FormLabel></FormItem>
-                            <FormItem><FormControl><RadioGroupItem value="crystal-clear" id="crystal-clear" /></FormControl><FormLabel htmlFor="crystal-clear" className="ml-2">Cristalina</FormLabel></FormItem>
-                        </RadioGroup></FormControl><FormMessage /></FormItem>
-                    )} />
-                     <FormField control={form.control} name="poolProperties.hasStains" render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Manchas?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
-                    )} />
-                     <FormField control={form.control} name="poolProperties.hasScale" render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Incrustações?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
-                    )} />
-                </CardContent>
-            </Card>
+        {/* PROPRIEDADES DA PISCINA */}
+        <Card>
+            <CardHeader><CardTitle>Propriedades da Piscina</CardTitle></CardHeader>
+            <CardContent className="grid md:grid-cols-2 gap-6">
+                <FormField control={form.control} name="poolProperties.material" render={({ field }) => (
+                    <FormItem><FormLabel>Material</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4">
+                        <FormItem><FormControl><RadioGroupItem value="fiber" id="fiber" /></FormControl><FormLabel htmlFor="fiber" className="ml-2">Fibra</FormLabel></FormItem>
+                        <FormItem><FormControl><RadioGroupItem value="masonry" id="masonry" /></FormControl><FormLabel htmlFor="masonry" className="ml-2">Alvenaria</FormLabel></FormItem>
+                        <FormItem><FormControl><RadioGroupItem value="vinyl" id="vinyl" /></FormControl><FormLabel htmlFor="vinyl" className="ml-2">Vinil</FormLabel></FormItem>
+                    </RadioGroup></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="poolProperties.waterQuality" render={({ field }) => (
+                     <FormItem><FormLabel>Qualidade da Água</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4">
+                        <FormItem><FormControl><RadioGroupItem value="green" id="green" /></FormControl><FormLabel htmlFor="green" className="ml-2">Verde</FormLabel></FormItem>
+                        <FormItem><FormControl><RadioGroupItem value="cloudy" id="cloudy" /></FormControl><FormLabel htmlFor="cloudy" className="ml-2">Turva</FormLabel></FormItem>
+                        <FormItem><FormControl><RadioGroupItem value="crystal-clear" id="crystal-clear" /></FormControl><FormLabel htmlFor="crystal-clear" className="ml-2">Cristalina</FormLabel></FormItem>
+                    </RadioGroup></FormControl><FormMessage /></FormItem>
+                )} />
+                 <FormField control={form.control} name="poolProperties.hasStains" render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Manchas?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
+                )} />
+                 <FormField control={form.control} name="poolProperties.hasScale" render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Incrustações?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
+                )} />
+            </CardContent>
+        </Card>
 
-            {/* FILTRO */}
-            <Card>
-                <CardHeader><CardTitle>Filtro</CardTitle></CardHeader>
-                <CardContent className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <FormField control={form.control} name="filterData.filterType" render={({ field }) => (
-                        <FormItem><FormLabel>Tipo do Filtro</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
-                            <SelectContent>
-                                <SelectItem value="sand">Areia</SelectItem>
-                                <SelectItem value="cartridge">Cartucho</SelectItem>
-                                <SelectItem value="polyester">Poliéster</SelectItem>
-                            </SelectContent>
-                        </Select><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="filterData.lastFilterChange" render={({ field }) => (
-                        <FormItem><FormLabel>Última Troca</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="filterData.nextFilterChange" render={({ field }) => (
-                        <FormItem><FormLabel>Próxima Troca</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="filterData.filterPressure" render={({ field }) => (
-                        <FormItem><FormLabel>Pressão</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                     <FormField control={form.control} name="filterData.filterCapacity" render={({ field }) => (
-                        <FormItem><FormLabel>Capacidade</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                </CardContent>
-            </Card>
-            </>
-        ) : (
-            <Card>
-                <CardHeader><CardTitle>Nenhuma Piscina Encontrada</CardTitle></CardHeader>
-                <CardContent>
-                    <p>Este cliente ainda não tem uma piscina cadastrada. Adicione uma para ver e editar os detalhes.</p>
-                    {/* TODO: Add button to create a new pool */}
-                </CardContent>
-            </Card>
-        )}
+        {/* FILTRO */}
+        <Card>
+            <CardHeader><CardTitle>Filtro</CardTitle></CardHeader>
+            <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <FormField control={form.control} name="filterData.filterType" render={({ field }) => (
+                    <FormItem><FormLabel>Tipo do Filtro</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            <SelectItem value="sand">Areia</SelectItem>
+                            <SelectItem value="cartridge">Cartucho</SelectItem>
+                            <SelectItem value="polyester">Poliéster</SelectItem>
+                        </SelectContent>
+                    </Select><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="filterData.lastFilterChange" render={({ field }) => (
+                    <FormItem><FormLabel>Última Troca</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                 <FormField control={form.control} name="filterData.filterPressure" render={({ field }) => (
+                    <FormItem><FormLabel>Pressão (PSI)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                 <FormField control={form.control} name="filterData.filterCapacity" render={({ field }) => (
+                    <FormItem className="md:col-span-2"><FormLabel>Capacidade do Filtro (kg/cv)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+            </CardContent>
+        </Card>
       </form>
     </Form>
   );
 }
+
+    
