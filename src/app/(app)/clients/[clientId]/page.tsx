@@ -249,10 +249,10 @@ export default function ClientDetailsPage({
   const calculatedVolume = React.useMemo(() => {
     const { type, length = 0, width = 0, averageDepth = 0 } = watchedPoolDimensions;
     if (!averageDepth || averageDepth <= 0) return 0;
-
+  
     let volumeM3 = 0;
     const OVAL_CIRCULAR_FACTOR = 0.785;
-
+  
     switch (type) {
       case 'quadrilateral':
         if (length > 0 && width > 0) {
@@ -260,9 +260,10 @@ export default function ClientDetailsPage({
         }
         break;
       case 'circular':
-        if (length > 0) { // Using length as diameter1
-          const diameter2 = width > 0 ? width : length; // Use width if provided as diameter2, otherwise it's a circle
-          volumeM3 = length * diameter2 * averageDepth * OVAL_CIRCULAR_FACTOR;
+         // For circular, length is diameter1, width is diameter2. If width is empty, it's a circle.
+        const diameter = length > 0 ? length : 0;
+        if (diameter > 0) {
+           volumeM3 = diameter * diameter * averageDepth * OVAL_CIRCULAR_FACTOR;
         }
         break;
       case 'oval':
@@ -272,7 +273,7 @@ export default function ClientDetailsPage({
         break;
     }
     return Math.round(volumeM3 * 1000); // convert to liters
-}, [watchedPoolDimensions]);
+  }, [watchedPoolDimensions]);
 
 
   const getChemicalStatusColor = (param: string, value: number) => {
@@ -568,100 +569,55 @@ export default function ClientDetailsPage({
                 </FormItem>
               )}
             />
-
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-              {watchedPoolType === 'quadrilateral' && (
-                <>
-                  <FormField
-                    control={form.control}
-                    name="poolDimensions.length"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Comprimento (m)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.1" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="poolDimensions.width"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Largura (m)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.1" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </>
+              {/* Comprimento ou Diâmetro */}
+              <FormField
+                control={form.control}
+                name="poolDimensions.length"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{watchedPoolType === "circular" ? "Diâmetro" : "Comprimento"}</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.1" placeholder="0" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Largura (exceto para circular) */}
+              {watchedPoolType !== "circular" && (
+                <FormField
+                  control={form.control}
+                  name="poolDimensions.width"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Largura</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.1" placeholder="0" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               )}
 
-              {watchedPoolType === 'circular' && (
-                  <FormField
-                    control={form.control}
-                    name="poolDimensions.length"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Diâmetro (m)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.1" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-              )}
-
-              {watchedPoolType === 'oval' && (
-                 <>
-                    <FormField
-                      control={form.control}
-                      name="poolDimensions.length"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Comprimento (m)</FormLabel>
-                          <FormControl>
-                            <Input type="number" step="0.1" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="poolDimensions.width"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Largura (m)</FormLabel>
-                          <FormControl>
-                            <Input type="number" step="0.1" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                 </>
-              )}
-              
+              {/* Profundidade Média */}
               <FormField
                 control={form.control}
                 name="poolDimensions.averageDepth"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Profundidade Média (m)</FormLabel>
+                    <FormLabel>Profundidade Média</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.1" {...field} />
+                      <Input type="number" step="0.1" placeholder="0" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               
+              {/* Litragem */}
               <FormItem>
                 <FormLabel>Litragem (L)</FormLabel>
                 <FormControl>
@@ -677,6 +633,7 @@ export default function ClientDetailsPage({
             </div>
           </CardContent>
         </Card>
+
 
         {/* DADOS QUÍMICOS E TÉCNICOS */}
         <Card>
@@ -803,5 +760,3 @@ export default function ClientDetailsPage({
     </Form>
   );
 }
-
-    
