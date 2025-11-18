@@ -251,7 +251,7 @@ export function ClientEditDialog({
                             <Input {...field} onChange={handleAddressChange} />
                         </FormControl>
                          {addressValue && (
-                           <Button variant="outline" size="sm" asChild className="mt-2">
+                           <Button variant="outline" size="sm" asChild className="mt-2 hover:bg-[#4285F4] hover:text-white transition-colors">
                              <Link href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
                                 <MapPin className="mr-2 h-4 w-4" />
                                 Abrir no Google Maps
@@ -272,7 +272,7 @@ export function ClientEditDialog({
                             <Input {...field} onChange={handlePhoneChange} placeholder="(XX) XXXXX-XXXX"/>
                         </FormControl>
                          {phoneValue && (
-                           <Button variant="outline" size="sm" asChild className="mt-2">
+                           <Button variant="outline" size="sm" asChild className="mt-2 hover:bg-[#25D366] hover:text-white transition-colors">
                                <Link href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                                     <WhatsAppIcon className="mr-2 h-4 w-4" />
                                     Abrir no WhatsApp
