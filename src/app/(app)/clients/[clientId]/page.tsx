@@ -101,7 +101,7 @@ export default function ClientDetailsPage({
   params: { clientId: string };
 }) {
   const router = useRouter();
-  const { clientId } = routeParams;
+  const { clientId } = React.use(Promise.resolve(routeParams));
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -674,5 +674,3 @@ export default function ClientDetailsPage({
     </Form>
   );
 }
-
-    
