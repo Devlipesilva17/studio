@@ -77,12 +77,11 @@ const fullClientProfileSchema = z.object({
 
 
 export default function ClientDetailsPage({
-  params: routeParams,
+  params,
 }: {
   params: { clientId: string };
 }) {
   const router = useRouter();
-  const params = React.use(Promise.resolve(routeParams));
   const { clientId } = params;
 
   const { user } = useUser();
@@ -410,5 +409,7 @@ export default function ClientDetailsPage({
     </Form>
   );
 }
+
+    
 
     
