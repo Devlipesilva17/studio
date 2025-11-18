@@ -63,7 +63,6 @@ const poolPropertiesSchema = z.object({
 const filterDataSchema = z.object({
     filterType: z.enum(['sand', 'cartridge', 'polyester']).default('sand'),
     lastFilterChange: z.string().optional(),
-    filterPressure: z.coerce.number().optional(),
     filterCapacity: z.coerce.number().optional(),
 });
 
@@ -77,12 +76,12 @@ const fullClientProfileSchema = z.object({
 
 
 export default function ClientDetailsPage({
-  params,
+  params: routeParams,
 }: {
   params: { clientId: string };
 }) {
   const router = useRouter();
-  const { clientId } = params;
+  const { clientId } = routeParams;
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -112,7 +111,7 @@ export default function ClientDetailsPage({
         poolDimensions: { type: 'quadrilateral', length: 0, width: 0, averageDepth: 0 },
         chemicalData: { ph: 7.2, chlorine: 1, alkalinity: 80, calciumHardness: 200 },
         poolProperties: { material: 'fiber', hasStains: false, hasScale: false, waterQuality: 'crystal-clear' },
-        filterData: { filterType: 'sand', lastFilterChange: '', filterPressure: 0, filterCapacity: 0 }
+        filterData: { filterType: 'sand', lastFilterChange: '', filterCapacity: 0 }
     }
   });
   
@@ -147,7 +146,6 @@ export default function ClientDetailsPage({
           filterData: {
             filterType: pool?.filterType || 'sand',
             lastFilterChange: pool?.lastFilterChange ? new Date(pool.lastFilterChange).toISOString().split('T')[0] : '',
-            filterPressure: pool?.filterPressure || 0,
             filterCapacity: pool?.filterCapacity || 0,
           }
         });
@@ -203,6 +201,7 @@ export default function ClientDetailsPage({
   };
 
   const isLoading = isClientLoading || arePoolsLoading;
+  const watchedFilterType = form.watch('filterData.filterType');
 
   if (isLoading) {
     return (
@@ -383,7 +382,7 @@ export default function ClientDetailsPage({
         {/* FILTRO */}
         <Card>
             <CardHeader><CardTitle>Filtro</CardTitle></CardHeader>
-            <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <CardContent className="grid md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="filterData.filterType" render={({ field }) => (
                     <FormItem><FormLabel>Tipo do Filtro</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
@@ -394,22 +393,20 @@ export default function ClientDetailsPage({
                         </SelectContent>
                     </Select><FormMessage /></FormItem>
                 )} />
-                <FormField control={form.control} name="filterData.lastFilterChange" render={({ field }) => (
-                    <FormItem><FormLabel>Última Troca</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                 <FormField control={form.control} name="filterData.filterPressure" render={({ field }) => (
-                    <FormItem><FormLabel>Pressão (PSI)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                 <FormField control={form.control} name="filterData.filterCapacity" render={({ field }) => (
-                    <FormItem className="md:col-span-2"><FormLabel>Capacidade do Filtro (kg/cv)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
+
+                {watchedFilterType === 'sand' && (
+                    <>
+                        <FormField control={form.control} name="filterData.lastFilterChange" render={({ field }) => (
+                            <FormItem><FormLabel>Última Troca</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="filterData.filterCapacity" render={({ field }) => (
+                            <FormItem className="md:col-span-2"><FormLabel>Capacidade do Filtro (kg/cv)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                    </>
+                )}
             </CardContent>
         </Card>
       </form>
     </Form>
   );
 }
-
-    
-
-    
