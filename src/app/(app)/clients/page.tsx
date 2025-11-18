@@ -135,7 +135,9 @@ export default function ClientsPage() {
                     <TableHead className="hidden md:table-cell">
                       Membro Desde
                     </TableHead>
-                    <TableHead>Ficha</TableHead>
+                    <TableHead>
+                      <span className="sr-only">Ficha</span>
+                    </TableHead>
                     <TableHead>
                       <span className="sr-only">Ações</span>
                     </TableHead>
