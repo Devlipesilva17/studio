@@ -352,50 +352,105 @@ export default function ClientDetailsPage({
 
         {/* DADOS PESSOAIS */}
         <Card>
-            <CardHeader>
-                <CardTitle>Dados Pessoais</CardTitle>
-            </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-6">
-                <FormField control={form.control} name="client.name" render={({ field }) => (
-                    <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="client.phone" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Telefone</FormLabel>
-                        <FormControl><Input {...field} onChange={handlePhoneChange} placeholder="(XX) XXXXX-XXXX" /></FormControl>
-                        {cleanPhoneNumber && (
-                           <Button variant="outline" size="sm" asChild className="mt-2 hover:bg-[#25D366] hover:text-white transition-colors">
-                               <Link href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                                    <WhatsAppIcon className="mr-2 h-4 w-4" />
-                                    Abrir no WhatsApp
-                               </Link>
-                           </Button>
-                        )}
-                        <FormMessage />
-                    </FormItem>
-                )} />
-                <FormField control={form.control} name="client.address" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Endereço</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        {watchedAddress && (
-                           <Button variant="outline" size="sm" asChild className="mt-2 hover:bg-[#4285F4] hover:text-white transition-colors">
-                             <Link href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
-                                <MapPin className="mr-2 h-4 w-4" />
-                                Abrir no Google Maps
-                           </Link>
-                           </Button>
-                        )}
-                        <FormMessage />
-                    </FormItem>
-                )} />
-                <FormField control={form.control} name="client.startDate" render={({ field }) => (
-                    <FormItem><FormLabel>Data de Início</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="client.notes" render={({ field }) => (
-                    <FormItem className="md:col-span-2"><FormLabel>Observações</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-            </CardContent>
+          <CardHeader>
+            <CardTitle>Dados Pessoais</CardTitle>
+          </CardHeader>
+          <CardContent className="grid md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="client.name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nome</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="client.phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Telefone</FormLabel>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        {...field}
+                        onChange={handlePhoneChange}
+                        placeholder="(XX) XXXXX-XXXX"
+                        className="pr-10"
+                      />
+                    </FormControl>
+                    {cleanPhoneNumber && (
+                      <Link
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute inset-y-0 right-0 flex items-center pr-3"
+                      >
+                        <WhatsAppIcon className="h-5 w-5 text-gray-400 hover:text-[#25D366] transition-colors" />
+                      </Link>
+                    )}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="client.address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Endereço</FormLabel>
+                   <div className="relative">
+                    <FormControl>
+                        <Input {...field} className="pr-10" />
+                    </FormControl>
+                     {watchedAddress && (
+                       <Link
+                         href={googleMapsUrl}
+                         target="_blank"
+                         rel="noopener noreferrer"
+                         className="absolute inset-y-0 right-0 flex items-center pr-3"
+                       >
+                         <MapPin className="h-5 w-5 text-gray-400 hover:text-[#4285F4] transition-colors" />
+                       </Link>
+                     )}
+                   </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="client.startDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Data de Início</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="client.notes"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Observações</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
         </Card>
 
         {/* METRAGENS E DIMENSÕES */}
@@ -513,5 +568,3 @@ export default function ClientDetailsPage({
     </Form>
   );
 }
-
-    
