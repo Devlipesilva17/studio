@@ -4,16 +4,34 @@ export type Client = {
   email: string;
   phone: string;
   address: string;
+  neighborhood: string;
   createdAt: string; // ISO 8601 date string
   avatarUrl: string;
+  notes?: string;
+  startDate?: string;
 };
 
 export type Pool = {
   id: string;
   clientId: string;
   name: string;
+  type: 'quadrilateral' | 'circular' | 'oval';
+  length?: number;
+  width?: number; // doubles as diameter for circular
+  averageDepth?: number;
+  ph?: number;
+  chlorine?: number;
+  alkalinity?: number;
+  calciumHardness?: number;
+  material?: 'fiber' | 'masonry' | 'vinyl';
+  hasStains?: boolean;
+  hasScale?: boolean;
+  waterQuality?: 'green' | 'cloudy' | 'crystal-clear';
+  filterType?: 'sand' | 'cartridge' | 'polyester';
+  lastFilterChange?: string; // ISO 8601 date string
+  filterPressure?: number;
+  filterCapacity?: number;
   size: number; // in gallons
-  type: 'chlorine' | 'saltwater' | 'bromine';
   lastTreatment?: string;
 };
 

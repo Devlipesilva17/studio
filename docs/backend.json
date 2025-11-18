@@ -64,6 +64,10 @@
           "type": "string",
           "description": "Address of the client."
         },
+        "neighborhood": {
+          "type": "string",
+          "description": "Neighborhood of the client."
+        },
         "startDate": {
           "type": "string",
           "description": "Date when the client started service.",
@@ -83,7 +87,8 @@
       },
       "required": [
         "id",
-        "name"
+        "name",
+        "neighborhood"
       ]
     },
     "Pool": {
