@@ -240,6 +240,7 @@ export default function ClientDetailsPage({
   const isLoading = isClientLoading || arePoolsLoading;
   const watchedFilterType = form.watch('filterData.filterType');
   const watchedPoolDimensions = form.watch('poolDimensions');
+  const watchedPoolType = form.watch('poolDimensions.type');
 
   const calculatedVolume = React.useMemo(() => {
     const { type, length = 0, width = 0, averageDepth = 0 } = watchedPoolDimensions;
@@ -493,11 +494,13 @@ export default function ClientDetailsPage({
                 )} />
                  <div className="grid md:grid-cols-4 gap-6">
                     <FormField control={form.control} name="poolDimensions.length" render={({ field }) => (
-                        <FormItem><FormLabel>Comprimento / Diâmetro (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>{watchedPoolType === 'circular' ? 'Diâmetro (m)' : 'Comprimento (m)'}</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                    <FormField control={form.control} name="poolDimensions.width" render={({ field }) => (
-                        <FormItem><FormLabel>Largura (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
+                    {watchedPoolType !== 'circular' && (
+                        <FormField control={form.control} name="poolDimensions.width" render={({ field }) => (
+                            <FormItem><FormLabel>Largura (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                    )}
                     <FormField control={form.control} name="poolDimensions.averageDepth" render={({ field }) => (
                         <FormItem><FormLabel>Profundidade Média (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
