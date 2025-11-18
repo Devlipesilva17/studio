@@ -30,6 +30,7 @@ import { useAuth, useFirestore } from '@/firebase';
 import { doc, setDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 // WhatsApp Icon
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -75,7 +76,6 @@ export function ClientEditDialog({
   const [addressValue, setAddressValue] = React.useState('');
   const [phoneValue, setPhoneValue] = React.useState('');
 
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -87,11 +87,26 @@ export function ClientEditDialog({
     },
   });
   
+  const formatPhoneNumber = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 2) {
+      return `(${digits}`;
+    }
+    if (digits.length <= 6) {
+      return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    }
+    if (digits.length <= 10) {
+      return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    }
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+  };
+
   React.useEffect(() => {
     if (client) {
+        const formattedPhone = client.phone ? formatPhoneNumber(client.phone) : '';
         form.reset({
             name: client.name,
-            phone: client.phone || '',
+            phone: formattedPhone,
             address: client.address || '',
             neighborhood: client.neighborhood || '',
             startDate: client.startDate ? new Date(client.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -125,6 +140,7 @@ export function ClientEditDialog({
     try {
         const clientData = {
             ...values,
+            phone: values.phone?.replace(/\D/g, '') || '',
             avatarUrl: client?.avatarUrl || `https://picsum.photos/seed/${values.name}/100/100`,
             startDate: values.startDate ? new Date(values.startDate).toISOString() : new Date().toISOString(),
             updatedAt: serverTimestamp(),
@@ -173,15 +189,16 @@ export function ClientEditDialog({
   }
   
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    form.setValue('phone', e.target.value);
-    setPhoneValue(e.target.value);
+    const rawValue = e.target.value.replace(/\D/g, '');
+    const formatted = formatPhoneNumber(e.target.value);
+    form.setValue('phone', formatted);
+    setPhoneValue(rawValue);
   }
 
   const encodedAddress = encodeURIComponent(addressValue);
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
   
-  const formattedPhone = phoneValue.replace(/\D/g, '');
-  const whatsappUrl = `https://wa.me/${formattedPhone}`;
+  const whatsappUrl = `https://wa.me/55${phoneValue}`;
 
 
   return (
@@ -234,10 +251,12 @@ export function ClientEditDialog({
                             <Input {...field} onChange={handleAddressChange} />
                         </FormControl>
                          {addressValue && (
-                           <Link href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1 pt-1">
-                                <MapPin className="h-3 w-3" />
+                           <Button variant="outline" size="sm" asChild className="mt-2">
+                             <Link href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
+                                <MapPin className="mr-2 h-4 w-4" />
                                 Abrir no Google Maps
                            </Link>
+                           </Button>
                         )}
                         <FormMessage />
                         </FormItem>
@@ -250,13 +269,15 @@ export function ClientEditDialog({
                         <FormItem>
                         <FormLabel>Telefone</FormLabel>
                         <FormControl>
-                            <Input {...field} onChange={handlePhoneChange}/>
+                            <Input {...field} onChange={handlePhoneChange} placeholder="(XX) XXXXX-XXXX"/>
                         </FormControl>
                          {phoneValue && (
-                           <Link href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1 pt-1">
-                                <WhatsAppIcon className="h-4 w-4" />
-                                Abrir no WhatsApp
-                           </Link>
+                           <Button variant="outline" size="sm" asChild className="mt-2">
+                               <Link href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                                    <WhatsAppIcon className="mr-2 h-4 w-4" />
+                                    Abrir no WhatsApp
+                               </Link>
+                           </Button>
                         )}
                         <FormMessage />
                         </FormItem>
