@@ -1,3 +1,5 @@
+'use client';
+
 import {
     Activity,
     ArrowUpRight,
@@ -12,6 +14,7 @@ import {
     CalendarCheck,
   } from "lucide-react"
   import Link from "next/link"
+  import * as React from 'react';
   
   import {
     Avatar,
@@ -38,7 +41,15 @@ import {
   import { DUMMY_CLIENTS, DUMMY_PAYMENTS, DUMMY_VISITS } from "@/lib/placeholder-data"
   
   export default function Dashboard() {
-    const todayVisits = DUMMY_VISITS.filter(v => new Date(v.scheduledDate).toDateString() === new Date().toDateString() && v.status === 'pending');
+    const [todayVisits, setTodayVisits] = React.useState<typeof DUMMY_VISITS>([]);
+    const [upcomingVisits, setUpcomingVisits] = React.useState<typeof DUMMY_VISITS>([]);
+
+    React.useEffect(() => {
+        const todayString = new Date().toDateString();
+        setTodayVisits(DUMMY_VISITS.filter(v => new Date(v.scheduledDate).toDateString() === todayString && v.status === 'pending'));
+        setUpcomingVisits(DUMMY_VISITS.filter(v => new Date(v.scheduledDate) >= new Date()).slice(0, 5));
+    }, []);
+
     const totalRevenue = DUMMY_PAYMENTS.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
     const pendingPayments = DUMMY_PAYMENTS.filter(p => p.status === 'pending');
     
@@ -132,7 +143,7 @@ import {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {DUMMY_VISITS.filter(v => new Date(v.scheduledDate) >= new Date()).slice(0, 5).map(visit => (
+                    {upcomingVisits.map(visit => (
                         <TableRow key={visit.id}>
                             <TableCell>
                                 <div className="font-medium">{visit.clientName}</div>
@@ -182,4 +193,3 @@ import {
         </>
     )
   }
-  

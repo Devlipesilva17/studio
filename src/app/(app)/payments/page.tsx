@@ -1,3 +1,5 @@
+'use client';
+
 import * as React from 'react';
 import { File, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -28,8 +30,15 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DUMMY_PAYMENTS } from '@/lib/placeholder-data';
 import { cn } from '@/lib/utils';
+import type { Payment } from '@/lib/types';
 
 export default function PaymentsPage() {
+  const [payments, setPayments] = React.useState<Payment[]>([]);
+
+  React.useEffect(() => {
+    setPayments(DUMMY_PAYMENTS);
+  }, []);
+
   return (
     <>
       <div className="flex items-center">
@@ -73,7 +82,7 @@ export default function PaymentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {DUMMY_PAYMENTS.map((payment) => (
+                  {payments.map((payment) => (
                     <TableRow key={payment.id}>
                       <TableCell className="font-medium">{payment.clientName}</TableCell>
                       <TableCell>
@@ -119,7 +128,7 @@ export default function PaymentsPage() {
             </CardContent>
             <CardFooter>
               <div className="text-xs text-muted-foreground">
-                Showing <strong>1-{DUMMY_PAYMENTS.length}</strong> of <strong>{DUMMY_PAYMENTS.length}</strong> payments
+                Showing <strong>1-{payments.length}</strong> of <strong>{payments.length}</strong> payments
               </div>
             </CardFooter>
           </Card>

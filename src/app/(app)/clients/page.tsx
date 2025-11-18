@@ -1,3 +1,5 @@
+'use client';
+
 import * as React from 'react';
 import {
   File,
@@ -38,6 +40,12 @@ import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function ClientsPage() {
+  const [clientList, setClientList] = React.useState<typeof DUMMY_CLIENTS>([]);
+
+  React.useEffect(() => {
+    setClientList(DUMMY_CLIENTS);
+  }, []);
+
   return (
     <>
       <div className="flex items-center">
@@ -112,7 +120,7 @@ export default function ClientsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {DUMMY_CLIENTS.map((client) => (
+                  {clientList.map((client) => (
                     <TableRow key={client.id}>
                       <TableCell className="hidden sm:table-cell">
                         <Avatar className="h-9 w-9">
@@ -166,7 +174,7 @@ export default function ClientsPage() {
             </CardContent>
             <CardFooter>
               <div className="text-xs text-muted-foreground">
-                Showing <strong>1-5</strong> of <strong>{DUMMY_CLIENTS.length}</strong> clients
+                Showing <strong>1-5</strong> of <strong>{clientList.length}</strong> clients
               </div>
             </CardFooter>
           </Card>
