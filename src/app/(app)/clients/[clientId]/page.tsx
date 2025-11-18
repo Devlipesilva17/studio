@@ -29,6 +29,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 
 const clientFormSchema = z.object({
@@ -202,6 +203,32 @@ export default function ClientDetailsPage({
 
   const isLoading = isClientLoading || arePoolsLoading;
   const watchedFilterType = form.watch('filterData.filterType');
+  const watchedChemicalData = form.watch('chemicalData');
+
+  const getChemicalStatusColor = (param: string, value: number) => {
+    if (value === undefined || value === null) return 'text-foreground'; // Default color if no value
+    switch(param) {
+      case 'ph':
+        if (value >= 7.2 && value <= 7.6) return 'text-green-600';
+        if (value >= 7.0 && value <= 7.8) return 'text-yellow-600';
+        return 'text-red-600';
+      case 'chlorine':
+        if (value >= 1.0 && value <= 3.0) return 'text-green-600';
+        if (value >= 0.5 && value <= 4.0) return 'text-yellow-600';
+        return 'text-red-600';
+      case 'alkalinity':
+        if (value >= 80 && value <= 120) return 'text-green-600';
+        if (value >= 60 && value <= 150) return 'text-yellow-600';
+        return 'text-red-600';
+      case 'calciumHardness':
+        if (value >= 200 && value <= 400) return 'text-green-600';
+        if (value >= 150 && value <= 500) return 'text-yellow-600';
+        return 'text-red-600';
+      default:
+        return 'text-foreground';
+    }
+  };
+
 
   if (isLoading) {
     return (
@@ -237,10 +264,10 @@ export default function ClientDetailsPage({
   }
   
   const chemicalParams = [
-      { name: 'pH', ideal: '7.2 a 7.6', formKey: 'chemicalData.ph' },
-      { name: 'Cloro Livre', ideal: '1.0 a 3.0 ppm', formKey: 'chemicalData.chlorine' },
-      { name: 'Alcalinidade', ideal: '80 a 120 ppm', formKey: 'chemicalData.alkalinity' },
-      { name: 'Dureza Cálcica', ideal: '200 a 400 ppm', formKey: 'chemicalData.calciumHardness' },
+      { name: 'pH', formKey: 'chemicalData.ph', paramKey: 'ph' },
+      { name: 'Cloro Livre', formKey: 'chemicalData.chlorine', paramKey: 'chlorine' },
+      { name: 'Alcalinidade', formKey: 'chemicalData.alkalinity', paramKey: 'alkalinity' },
+      { name: 'Dureza Cálcica', formKey: 'chemicalData.calciumHardness', paramKey: 'calciumHardness' },
   ];
 
   return (
@@ -331,7 +358,6 @@ export default function ClientDetailsPage({
                     <TableHeader>
                         <TableRow>
                             <TableHead>Parâmetro</TableHead>
-                            <TableHead>Indicador Ideal</TableHead>
                             <TableHead className="w-[200px]">Indicador Atual</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -339,10 +365,14 @@ export default function ClientDetailsPage({
                         {chemicalParams.map(param => (
                             <TableRow key={param.name}>
                                 <TableCell className="font-medium">{param.name}</TableCell>
-                                <TableCell>{param.ideal}</TableCell>
                                 <TableCell>
                                     <FormField control={form.control} name={param.formKey as any} render={({ field }) => (
-                                        <FormItem><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+                                        <FormItem><FormControl><Input 
+                                            type="number" 
+                                            step="0.1" 
+                                            {...field} 
+                                            className={cn("font-bold", getChemicalStatusColor(param.paramKey, field.value))}
+                                            /></FormControl><FormMessage /></FormItem>
                                     )} />
                                 </TableCell>
                             </TableRow>
@@ -410,3 +440,4 @@ export default function ClientDetailsPage({
     </Form>
   );
 }
+
