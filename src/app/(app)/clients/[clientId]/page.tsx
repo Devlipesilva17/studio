@@ -611,7 +611,7 @@ export default function ClientDetailsPage({
         {/* FILTRO */}
         <Card>
             <CardHeader><CardTitle>Filtro</CardTitle></CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-6">
+            <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <FormField control={form.control} name="filterData.filterType" render={({ field }) => (
                     <FormItem><FormLabel>Tipo do Filtro</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
@@ -674,3 +674,5 @@ export default function ClientDetailsPage({
     </Form>
   );
 }
+
+    
