@@ -21,7 +21,7 @@ import {
   signInWithEmailAndPassword,
 } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const heroImage = {
@@ -34,6 +34,7 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = React.useState(false);
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [showPassword, setShowPassword] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
 
   const auth = useAuth();
@@ -155,7 +156,7 @@ export default function LoginPage() {
                   disabled={isLoading}
                 />
               </div>
-              <div className="grid gap-2">
+              <div className="grid gap-2 relative">
                 <div className="flex items-center">
                   <Label htmlFor="password">Senha</Label>
                   {!isSignUp && (
@@ -169,12 +170,23 @@ export default function LoginPage() {
                 </div>
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
+                  className="pr-10"
                 />
+                 <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-7 h-7 w-7"
+                  onClick={() => setShowPassword(!showPassword)}
+                  type="button"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <span className="sr-only">{showPassword ? "Ocultar senha" : "Mostrar senha"}</span>
+                </Button>
               </div>
               <Button onClick={handleAuthAction} type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
