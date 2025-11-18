@@ -1,3 +1,4 @@
+
 export type Client = {
   id: string;
   name: string;
@@ -9,6 +10,7 @@ export type Client = {
   avatarUrl: string;
   notes?: string;
   startDate?: string;
+  poolIds?: string[];
 };
 
 export type Pool = {
@@ -29,6 +31,7 @@ export type Pool = {
   waterQuality?: 'green' | 'cloudy' | 'crystal-clear';
   filterType?: 'sand' | 'cartridge' | 'polyester';
   lastFilterChange?: string; // ISO 8601 date string
+  nextFilterChange?: string; // ISO 8601 date string
   filterPressure?: number;
   filterCapacity?: number;
   size: number; // in gallons
