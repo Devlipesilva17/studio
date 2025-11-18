@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Save, Loader2, RefreshCw, MapPin } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, RefreshCw, MapPin, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,6 +29,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 
 // WhatsApp Icon
@@ -51,7 +55,7 @@ const clientFormSchema = z.object({
   name: z.string().min(2, "Nome é obrigatório"),
   phone: z.string().optional(),
   address: z.string().optional(),
-  startDate: z.string().optional(),
+  startDate: z.date().optional(),
   notes: z.string().optional(),
 });
 
@@ -78,7 +82,7 @@ const poolPropertiesSchema = z.object({
 
 const filterDataSchema = z.object({
     filterType: z.enum(['sand', 'cartridge', 'polyester']).default('sand'),
-    lastFilterChange: z.string().optional(),
+    lastFilterChange: z.date().optional(),
     filterCapacity: z.coerce.number().optional(),
 });
 
@@ -123,11 +127,11 @@ export default function ClientDetailsPage({
   const form = useForm<z.infer<typeof fullClientProfileSchema>>({
     resolver: zodResolver(fullClientProfileSchema),
     defaultValues: {
-        client: { name: '', phone: '', address: '', startDate: '', notes: '' },
+        client: { name: '', phone: '', address: '', notes: '' },
         poolDimensions: { type: 'quadrilateral' },
         chemicalData: { ph: 7.2, chlorine: 1, alkalinity: 80, calciumHardness: 200 },
         poolProperties: { material: 'fiber', hasStains: false, hasScale: false, waterQuality: 'crystal-clear' },
-        filterData: { filterType: 'sand', lastFilterChange: '' }
+        filterData: { filterType: 'sand' }
     }
   });
 
@@ -154,7 +158,7 @@ export default function ClientDetailsPage({
             name: client.name || '',
             phone: formattedPhone,
             address: client.address || '',
-            startDate: client.startDate ? new Date(client.startDate).toISOString().split('T')[0] : '',
+            startDate: client.startDate ? new Date(client.startDate) : undefined,
             notes: client.notes || '',
           },
           poolDimensions: {
@@ -177,7 +181,7 @@ export default function ClientDetailsPage({
           },
           filterData: {
             filterType: pool?.filterType || 'sand',
-            lastFilterChange: pool?.lastFilterChange ? new Date(pool.lastFilterChange).toISOString().split('T')[0] : '',
+            lastFilterChange: pool?.lastFilterChange ? new Date(pool.lastFilterChange) : undefined,
             filterCapacity: pool?.filterCapacity || undefined,
           }
         });
@@ -199,6 +203,7 @@ export default function ClientDetailsPage({
           const clientData = {
               ...data.client,
               phone: data.client.phone?.replace(/\D/g, '') || '',
+              startDate: data.client.startDate?.toISOString(),
           }
           // --- Update Client Data ---
           await updateDoc(clientRef, clientData);
@@ -210,6 +215,7 @@ export default function ClientDetailsPage({
             ...data.chemicalData,
             ...data.poolProperties,
             ...data.filterData,
+            lastFilterChange: data.filterData.lastFilterChange?.toISOString(),
             updatedAt: serverTimestamp(),
           };
           
@@ -456,11 +462,39 @@ export default function ClientDetailsPage({
               control={form.control}
               name="client.startDate"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel>Data de Início</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP", { locale: ptBR })
+                          ) : (
+                            <span>Escolha uma data</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date > new Date() || date < new Date("1900-01-01")
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -591,9 +625,44 @@ export default function ClientDetailsPage({
 
                 {watchedFilterType === 'sand' && (
                     <>
-                        <FormField control={form.control} name="filterData.lastFilterChange" render={({ field }) => (
-                            <FormItem><FormLabel>Última Troca</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
+                        <FormField
+                            control={form.control}
+                            name="filterData.lastFilterChange"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                <FormLabel>Última Troca</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "pl-3 text-left font-normal",
+                                            !field.value && "text-muted-foreground"
+                                        )}
+                                        >
+                                        {field.value ? (
+                                            format(field.value, "PPP", { locale: ptBR })
+                                        ) : (
+                                            <span>Escolha uma data</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        initialFocus
+                                    />
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <FormField control={form.control} name="filterData.filterCapacity" render={({ field }) => (
                             <FormItem><FormLabel>Capacidade do Filtro (kg/cv)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
@@ -605,3 +674,5 @@ export default function ClientDetailsPage({
     </Form>
   );
 }
+
+    
