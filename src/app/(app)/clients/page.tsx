@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { File, ListFilter, MoreHorizontal, PlusCircle } from 'lucide-react';
+import { Clipboard, File, ListFilter, MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -135,6 +135,7 @@ export default function ClientsPage() {
                     <TableHead className="hidden md:table-cell">
                       Membro Desde
                     </TableHead>
+                    <TableHead>Ficha</TableHead>
                     <TableHead>
                       <span className="sr-only">Ações</span>
                     </TableHead>
@@ -143,7 +144,7 @@ export default function ClientsPage() {
                 <TableBody>
                   {isLoading && (
                      <TableRow>
-                        <TableCell colSpan={6} className="text-center">Carregando...</TableCell>
+                        <TableCell colSpan={7} className="text-center">Carregando...</TableCell>
                     </TableRow>
                   )}
                   {!isLoading && clientList && clientList.map((client) => (
@@ -168,6 +169,14 @@ export default function ClientsPage() {
                         {client.startDate ? new Date(client.startDate).toLocaleDateString('pt-BR') : 'N/A'}
                       </TableCell>
                       <TableCell>
+                         <Button variant="outline" size="icon" asChild>
+                            <Link href={`/clients/${client.id}`}>
+                                <Clipboard className="h-4 w-4" />
+                                <span className="sr-only">Ver Ficha</span>
+                            </Link>
+                         </Button>
+                      </TableCell>
+                      <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -186,9 +195,6 @@ export default function ClientsPage() {
                             >
                               Editar
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                               <Link href={`/clients/${client.id}`}>Ver Ficha</Link>
-                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-destructive">
                               Deletar
@@ -200,7 +206,7 @@ export default function ClientsPage() {
                   ))}
                   {!isLoading && (!clientList || clientList.length === 0) && (
                     <TableRow>
-                        <TableCell colSpan={6} className="text-center">Nenhum cliente encontrado. Adicione um novo cliente.</TableCell>
+                        <TableCell colSpan={7} className="text-center">Nenhum cliente encontrado. Adicione um novo cliente.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
