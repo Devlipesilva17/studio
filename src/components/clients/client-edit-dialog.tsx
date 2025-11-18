@@ -154,7 +154,6 @@ export function ClientEditDialog({
   }
 
   const encodedAddress = encodeURIComponent(addressValue);
-  const googleMapsEmbedUrl = `https://www.google.com/maps/embed/v1/place?key=dummy-key&q=${encodedAddress}`;
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
 
 
@@ -207,30 +206,16 @@ export function ClientEditDialog({
                         <FormControl>
                             <Input {...field} onChange={handleAddressChange} />
                         </FormControl>
+                         {addressValue && (
+                           <Link href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1 pt-1">
+                                <MapPin className="h-3 w-3" />
+                                Abrir no Google Maps
+                           </Link>
+                        )}
                         <FormMessage />
                         </FormItem>
                     )}
                     />
-                    
-                    {addressValue && (
-                        <div className="space-y-2">
-                           <div className="aspect-video w-full rounded-md overflow-hidden border">
-                             <iframe
-                                width="100%"
-                                height="100%"
-                                style={{ border: 0 }}
-                                loading="lazy"
-                                allowFullScreen
-                                src={googleMapsEmbedUrl}
-                             ></iframe>
-                           </div>
-                           <Link href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                Abrir no Google Maps
-                           </Link>
-                        </div>
-                    )}
-
                     <FormField
                     control={form.control}
                     name="phone"
