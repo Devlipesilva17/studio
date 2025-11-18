@@ -102,7 +102,6 @@ export default function ClientDetailsPage({
 }) {
   const router = useRouter();
   const { clientId } = params;
-
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -249,30 +248,31 @@ export default function ClientDetailsPage({
 
   const calculatedVolume = React.useMemo(() => {
     const { type, length = 0, width = 0, averageDepth = 0 } = watchedPoolDimensions;
-    if (averageDepth <= 0) return 0;
-    
+    if (!averageDepth || averageDepth <= 0) return 0;
+
     let volumeM3 = 0;
-    const OVAL_CIRCULAR_FACTOR = 0.785; // PI / 4
-    
-    switch(type) {
-        case 'quadrilateral':
-            if (length > 0 && width > 0) {
-                volumeM3 = length * width * averageDepth;
-            }
-            break;
-        case 'circular':
-            if (length > 0) { // diameter
-                volumeM3 = Math.pow(length, 2) * averageDepth * OVAL_CIRCULAR_FACTOR;
-            }
-            break;
-        case 'oval':
-             if (length > 0 && width > 0) {
-                volumeM3 = length * width * averageDepth * OVAL_CIRCULAR_FACTOR;
-             }
-            break;
+    const OVAL_CIRCULAR_FACTOR = 0.785;
+
+    switch (type) {
+      case 'quadrilateral':
+        if (length > 0 && width > 0) {
+          volumeM3 = length * width * averageDepth;
+        }
+        break;
+      case 'circular':
+        if (length > 0) { // Using length as diameter1
+          const diameter2 = width > 0 ? width : length; // Use width if provided as diameter2, otherwise it's a circle
+          volumeM3 = length * diameter2 * averageDepth * OVAL_CIRCULAR_FACTOR;
+        }
+        break;
+      case 'oval':
+        if (length > 0 && width > 0) {
+          volumeM3 = length * width * averageDepth * OVAL_CIRCULAR_FACTOR;
+        }
+        break;
     }
     return Math.round(volumeM3 * 1000); // convert to liters
-  }, [watchedPoolDimensions]);
+}, [watchedPoolDimensions]);
 
 
   const getChemicalStatusColor = (param: string, value: number) => {
@@ -517,36 +517,165 @@ export default function ClientDetailsPage({
 
         {/* METRAGENS E DIMENSÕES */}
         <Card>
-            <CardHeader><CardTitle>Dados da Piscina: Metragens e Dimensões</CardTitle></CardHeader>
-            <CardContent className="space-y-6">
-                <FormField control={form.control} name="poolDimensions.type" render={({ field }) => (
-                    <FormItem><FormLabel>Tipo da Piscina</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4">
-                        <FormItem><FormControl><RadioGroupItem value="quadrilateral" id="quadrilateral" /></FormControl><FormLabel htmlFor="quadrilateral" className="ml-2">Quadrilateral</FormLabel></FormItem>
-                        <FormItem><FormControl><RadioGroupItem value="circular" id="circular" /></FormControl><FormLabel htmlFor="circular" className="ml-2">Circular</FormLabel></FormItem>
-                        <FormItem><FormControl><RadioGroupItem value="oval" id="oval" /></FormControl><FormLabel htmlFor="oval" className="ml-2">Oval</FormLabel></FormItem>
-                    </RadioGroup></FormControl><FormMessage /></FormItem>
-                )} />
-                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                    <FormField control={form.control} name="poolDimensions.length" render={({ field }) => (
-                        <FormItem><FormLabel>{watchedPoolType === 'circular' ? 'Diâmetro (m)' : 'Comprimento (m)'}</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    {watchedPoolType !== 'circular' && (
-                        <FormField control={form.control} name="poolDimensions.width" render={({ field }) => (
-                            <FormItem><FormLabel>Largura (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                    )}
-                    <FormField control={form.control} name="poolDimensions.averageDepth" render={({ field }) => (
-                        <FormItem><FormLabel>Profundidade Média (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormItem>
-                        <FormLabel>Litragem (L)</FormLabel>
+          <CardHeader>
+            <CardTitle>Dados da Piscina: Metragens e Dimensões</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <FormField
+              control={form.control}
+              name="poolDimensions.type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo da Piscina</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // Reset other fields when type changes to avoid incorrect calculations
+                        form.setValue('poolDimensions.length', undefined);
+                        form.setValue('poolDimensions.width', undefined);
+                      }}
+                      value={field.value}
+                      className="flex gap-4"
+                    >
+                      <FormItem className="flex items-center space-x-2">
                         <FormControl>
-                            <Input type="text" readOnly value={calculatedVolume.toLocaleString('pt-BR')} className="font-bold bg-muted" />
+                          <RadioGroupItem value="quadrilateral" id="quadrilateral" />
                         </FormControl>
-                        <FormDescription>Volume calculado</FormDescription>
-                    </FormItem>
-                </div>
-            </CardContent>
+                        <FormLabel htmlFor="quadrilateral" className="font-normal">
+                          Quadrilateral
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <RadioGroupItem value="circular" id="circular" />
+                        </FormControl>
+                        <FormLabel htmlFor="circular" className="font-normal">
+                          Circular
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <RadioGroupItem value="oval" id="oval" />
+                        </FormControl>
+                        <FormLabel htmlFor="oval" className="font-normal">
+                          Oval
+                        </FormLabel>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 items-end">
+              {watchedPoolType === 'quadrilateral' && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="poolDimensions.length"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Comprimento (m)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="poolDimensions.width"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Largura (m)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+
+              {watchedPoolType === 'circular' && (
+                  <FormField
+                    control={form.control}
+                    name="poolDimensions.length"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Diâmetro (m)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+              )}
+
+              {watchedPoolType === 'oval' && (
+                 <>
+                    <FormField
+                      control={form.control}
+                      name="poolDimensions.length"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Comprimento (m)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="poolDimensions.width"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Largura (m)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                 </>
+              )}
+              
+              <FormField
+                control={form.control}
+                name="poolDimensions.averageDepth"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Profundidade Média (m)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormItem>
+                <FormLabel>Litragem (L)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    readOnly
+                    value={calculatedVolume.toLocaleString('pt-BR')}
+                    className="font-bold bg-muted"
+                  />
+                </FormControl>
+                <FormDescription>Volume calculado</FormDescription>
+              </FormItem>
+            </div>
+          </CardContent>
         </Card>
 
         {/* DADOS QUÍMICOS E TÉCNICOS */}
@@ -674,3 +803,5 @@ export default function ClientDetailsPage({
     </Form>
   );
 }
+
+    
