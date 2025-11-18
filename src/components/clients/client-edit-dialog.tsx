@@ -34,7 +34,7 @@ const formSchema = z.object({
   name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
   phone: z.string().optional(),
   address: z.string().optional(),
-  neighborhood: z.string().min(2, { message: 'O bairro deve ter pelo menos 2 caracteres.' }),
+  neighborhood: z.string().min(2, { message: 'A região deve ter pelo menos 2 caracteres.' }),
   startDate: z.string().optional(),
 });
 
@@ -101,7 +101,6 @@ export function ClientEditDialog({
     try {
         const clientData = {
             ...values,
-            email: client?.email || '', // Keep email if it exists, otherwise empty
             avatarUrl: client?.avatarUrl || `https://picsum.photos/seed/${values.name}/100/100`,
             startDate: values.startDate ? new Date(values.startDate).toISOString() : new Date().toISOString(),
             updatedAt: serverTimestamp(),
@@ -176,7 +175,7 @@ export function ClientEditDialog({
                     name="neighborhood"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Bairro</FormLabel>
+                        <FormLabel>Região</FormLabel>
                         <FormControl>
                             <Input {...field} />
                         </FormControl>

@@ -128,7 +128,7 @@ export default function ClientsPage() {
                       <span className="sr-only">Imagem</span>
                     </TableHead>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Bairro</TableHead>
+                    <TableHead>Região</TableHead>
                     <TableHead className="hidden md:table-cell">
                       Contato
                     </TableHead>
@@ -162,7 +162,6 @@ export default function ClientsPage() {
                       <TableCell className="font-medium">{client.name}</TableCell>
                       <TableCell>{client.neighborhood}</TableCell>
                       <TableCell className="hidden md:table-cell">
-                        <div className="text-sm text-muted-foreground">{client.email}</div>
                         <div className="text-sm text-muted-foreground">{client.phone}</div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
