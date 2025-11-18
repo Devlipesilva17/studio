@@ -25,10 +25,11 @@ import {
 } from '@/components/ui/form';
 import type { Client } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, MapPin } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase';
 import { doc, setDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import Link from 'next/link';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
@@ -55,6 +56,8 @@ export function ClientEditDialog({
   const [isSaving, setIsSaving] = React.useState(false);
   const auth = useAuth();
   const firestore = useFirestore();
+  const [addressValue, setAddressValue] = React.useState('');
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,6 +79,7 @@ export function ClientEditDialog({
             neighborhood: client.neighborhood || '',
             startDate: client.startDate ? new Date(client.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         });
+        setAddressValue(client.address || '');
     } else {
         form.reset({
             name: '',
@@ -84,6 +88,7 @@ export function ClientEditDialog({
             neighborhood: '',
             startDate: new Date().toISOString().split('T')[0],
         });
+        setAddressValue('');
     }
   }, [client, form, open]);
 
@@ -109,7 +114,7 @@ export function ClientEditDialog({
         if (client?.id) {
             // Update existing client
             const clientRef = doc(firestore, `users/${auth.currentUser.uid}/clients`, client.id);
-            await setDoc(clientRef, {
+            setDoc(clientRef, {
                 ...clientData,
                 createdAt: client.createdAt, // preserve original creation date
             }, { merge: true });
@@ -120,7 +125,7 @@ export function ClientEditDialog({
         } else {
             // Create new client
             const collectionRef = collection(firestore, `users/${auth.currentUser.uid}/clients`);
-            await addDoc(collectionRef, {
+            addDoc(collectionRef, {
                 ...clientData,
                 createdAt: serverTimestamp(),
             });
@@ -142,6 +147,16 @@ export function ClientEditDialog({
         setIsSaving(false);
     }
   };
+
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    form.setValue('address', e.target.value);
+    setAddressValue(e.target.value);
+  }
+
+  const encodedAddress = encodeURIComponent(addressValue);
+  const googleMapsEmbedUrl = `https://www.google.com/maps/embed/v1/place?key=dummy-key&q=${encodedAddress}`;
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -185,23 +200,43 @@ export function ClientEditDialog({
                     />
                     <FormField
                     control={form.control}
-                    name="phone"
+                    name="address"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Telefone</FormLabel>
+                        <FormLabel>Endereço</FormLabel>
                         <FormControl>
-                            <Input {...field} />
+                            <Input {...field} onChange={handleAddressChange} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
                     />
+                    
+                    {addressValue && (
+                        <div className="space-y-2">
+                           <div className="aspect-video w-full rounded-md overflow-hidden border">
+                             <iframe
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0 }}
+                                loading="lazy"
+                                allowFullScreen
+                                src={googleMapsEmbedUrl}
+                             ></iframe>
+                           </div>
+                           <Link href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                Abrir no Google Maps
+                           </Link>
+                        </div>
+                    )}
+
                     <FormField
                     control={form.control}
-                    name="address"
+                    name="phone"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Endereço</FormLabel>
+                        <FormLabel>Telefone</FormLabel>
                         <FormControl>
                             <Input {...field} />
                         </FormControl>
