@@ -30,17 +30,21 @@ export default function LoginPage() {
               <h1 className="text-3xl font-bold font-headline">PoolCare Pro</h1>
             </div>
             <p className="text-balance text-muted-foreground">
-              Digite seu e-mail abaixo para fazer login em sua conta
+              Crie sua conta para começar a gerenciar suas piscinas.
             </p>
           </div>
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">Login</CardTitle>
+              <CardTitle className="text-2xl">Criar Conta</CardTitle>
               <CardDescription>
-                Bem-vindo de volta ao seu painel de manutenção de piscinas.
+                Bem-vindo ao seu novo painel de manutenção de piscinas.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
+               <div className="grid gap-2">
+                <Label htmlFor="name">Nome</Label>
+                <Input id="name" type="text" placeholder="Seu Nome Completo" required />
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -63,7 +67,7 @@ export default function LoginPage() {
                 <Input id="password" type="password" required />
               </div>
               <Button type="submit" className="w-full" asChild>
-                <Link href="/dashboard">Login</Link>
+                <Link href="/dashboard">Criar Conta</Link>
               </Button>
             </CardContent>
           </Card>
