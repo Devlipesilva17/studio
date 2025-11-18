@@ -23,7 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -58,9 +58,9 @@ const clientFormSchema = z.object({
 
 const poolDimensionsSchema = z.object({
     type: z.enum(['quadrilateral', 'circular', 'oval']).default('quadrilateral'),
-    length: z.coerce.number().optional(),
-    width: z.coerce.number().optional(),
-    averageDepth: z.coerce.number().optional(),
+    length: z.coerce.number().positive({ message: "Deve ser positivo" }).optional(),
+    width: z.coerce.number().positive({ message: "Deve ser positivo" }).optional(),
+    averageDepth: z.coerce.number().positive({ message: "Deve ser positivo" }).optional(),
 });
 
 const chemicalDataSchema = z.object({
@@ -125,10 +125,10 @@ export default function ClientDetailsPage({
     resolver: zodResolver(fullClientProfileSchema),
     defaultValues: {
         client: { name: '', phone: '', address: '', startDate: '', notes: '' },
-        poolDimensions: { type: 'quadrilateral', length: 0, width: 0, averageDepth: 0 },
+        poolDimensions: { type: 'quadrilateral' },
         chemicalData: { ph: 7.2, chlorine: 1, alkalinity: 80, calciumHardness: 200 },
         poolProperties: { material: 'fiber', hasStains: false, hasScale: false, waterQuality: 'crystal-clear' },
-        filterData: { filterType: 'sand', lastFilterChange: '', filterCapacity: 0 }
+        filterData: { filterType: 'sand', lastFilterChange: '' }
     }
   });
 
@@ -160,9 +160,9 @@ export default function ClientDetailsPage({
           },
           poolDimensions: {
             type: pool?.type || 'quadrilateral',
-            length: pool?.length || 0,
-            width: pool?.width || 0,
-            averageDepth: pool?.averageDepth || 0,
+            length: pool?.length || undefined,
+            width: pool?.width || undefined,
+            averageDepth: pool?.averageDepth || undefined,
           },
           chemicalData: {
             ph: pool?.ph || 7.2,
@@ -179,7 +179,7 @@ export default function ClientDetailsPage({
           filterData: {
             filterType: pool?.filterType || 'sand',
             lastFilterChange: pool?.lastFilterChange ? new Date(pool.lastFilterChange).toISOString().split('T')[0] : '',
-            filterCapacity: pool?.filterCapacity || 0,
+            filterCapacity: pool?.filterCapacity || undefined,
           }
         });
     }
@@ -239,7 +239,34 @@ export default function ClientDetailsPage({
 
   const isLoading = isClientLoading || arePoolsLoading;
   const watchedFilterType = form.watch('filterData.filterType');
-  const watchedChemicalData = form.watch('chemicalData');
+  const watchedPoolDimensions = form.watch('poolDimensions');
+
+  const calculatedVolume = React.useMemo(() => {
+    const { type, length = 0, width = 0, averageDepth = 0 } = watchedPoolDimensions;
+    if (averageDepth <= 0) return 0;
+    
+    let volumeM3 = 0;
+    switch(type) {
+        case 'quadrilateral':
+            if (length > 0 && width > 0) {
+                volumeM3 = length * width * averageDepth;
+            }
+            break;
+        case 'circular':
+            if (length > 0) { // diameter
+                const radius = length / 2;
+                volumeM3 = Math.PI * Math.pow(radius, 2) * averageDepth;
+            }
+            break;
+        case 'oval':
+             if (length > 0 && width > 0) {
+                volumeM3 = (Math.PI * length * width / 4) * averageDepth;
+             }
+            break;
+    }
+    return Math.round(volumeM3 * 1000); // convert to liters
+  }, [watchedPoolDimensions]);
+
 
   const getChemicalStatusColor = (param: string, value: number) => {
     if (value === undefined || value === null) return 'text-foreground'; // Default color if no value
@@ -464,7 +491,7 @@ export default function ClientDetailsPage({
                         <FormItem><FormControl><RadioGroupItem value="oval" id="oval" /></FormControl><FormLabel htmlFor="oval" className="ml-2">Oval</FormLabel></FormItem>
                     </RadioGroup></FormControl><FormMessage /></FormItem>
                 )} />
-                 <div className="grid md:grid-cols-3 gap-6">
+                 <div className="grid md:grid-cols-4 gap-6">
                     <FormField control={form.control} name="poolDimensions.length" render={({ field }) => (
                         <FormItem><FormLabel>Comprimento / Diâmetro (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
@@ -474,6 +501,13 @@ export default function ClientDetailsPage({
                     <FormField control={form.control} name="poolDimensions.averageDepth" render={({ field }) => (
                         <FormItem><FormLabel>Profundidade Média (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
+                    <FormItem>
+                        <FormLabel>Litragem (L)</FormLabel>
+                        <FormControl>
+                            <Input type="text" readOnly value={calculatedVolume.toLocaleString('pt-BR')} className="font-bold bg-muted" />
+                        </FormControl>
+                        <FormDescription>Volume calculado</FormDescription>
+                    </FormItem>
                 </div>
             </CardContent>
         </Card>
@@ -568,3 +602,5 @@ export default function ClientDetailsPage({
     </Form>
   );
 }
+
+    
