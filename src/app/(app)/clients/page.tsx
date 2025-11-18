@@ -187,7 +187,7 @@ export default function ClientsPage() {
                               Editar
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                               <Link href={`/clients/${client.id}`}>Ver Mais</Link>
+                               <Link href={`/clients/${client.id}`}>Ver Ficha</Link>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-destructive">
