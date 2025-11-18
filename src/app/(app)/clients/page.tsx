@@ -1,13 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import {
-  File,
-  ListFilter,
-  MoreHorizontal,
-  PlusCircle,
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
+import { File, ListFilter, MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -35,36 +30,47 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DUMMY_CLIENTS } from '@/lib/placeholder-data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ClientEditDialog } from '@/components/clients/client-edit-dialog';
 import type { Client } from '@/lib/types';
-
+import { useUser, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
 
 export default function ClientsPage() {
-  const [clientList, setClientList] = React.useState<typeof DUMMY_CLIENTS>([]);
+  const { user } = useUser();
+  const firestore = useFirestore();
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
-  const [selectedClient, setSelectedClient] = React.useState<Client | null>(null);
+  const [selectedClient, setSelectedClient] = React.useState<Client | null>(
+    null
+  );
 
-  React.useEffect(() => {
-    setClientList(DUMMY_CLIENTS);
-  }, []);
+  const clientsQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return query(collection(firestore, `users/${user.uid}/clients`));
+  }, [firestore, user]);
+
+  const { data: clientList, isLoading } = useCollection<Client>(clientsQuery);
 
   const handleEditClick = (client: Client) => {
     setSelectedClient(client);
     setIsEditDialogOpen(true);
   };
-  
+
   const handleClientUpdate = (updatedClient: Client) => {
-    setClientList(prevList => 
-      prevList.map(client => client.id === updatedClient.id ? updatedClient : client)
-    );
+    // This will be handled by Firestore real-time updates
   };
+  
+  const handleAddNewClient = () => {
+    setSelectedClient(null);
+    setIsEditDialogOpen(true);
+  }
 
   return (
     <>
       <div className="flex items-center">
-        <h1 className="text-lg font-semibold md:text-2xl font-headline">Clientes</h1>
+        <h1 className="text-lg font-semibold md:text-2xl font-headline">
+          Clientes
+        </h1>
       </div>
       <Tabs defaultValue="all">
         <div className="flex items-center">
@@ -98,7 +104,7 @@ export default function ClientsPage() {
                 Exportar
               </span>
             </Button>
-            <Button size="sm" className="h-8 gap-1">
+            <Button size="sm" className="h-8 gap-1" onClick={handleAddNewClient}>
               <PlusCircle className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                 Adicionar Cliente
@@ -122,9 +128,9 @@ export default function ClientsPage() {
                       <span className="sr-only">Imagem</span>
                     </TableHead>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Contato</TableHead>
+                    <TableHead>Bairro</TableHead>
                     <TableHead className="hidden md:table-cell">
-                      Endereço
+                      Contato
                     </TableHead>
                     <TableHead className="hidden md:table-cell">
                       Membro Desde
@@ -135,7 +141,12 @@ export default function ClientsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {clientList.map((client) => (
+                  {isLoading && (
+                     <TableRow>
+                        <TableCell colSpan={6} className="text-center">Carregando...</TableCell>
+                    </TableRow>
+                  )}
+                  {!isLoading && clientList && clientList.map((client) => (
                     <TableRow key={client.id}>
                       <TableCell className="hidden sm:table-cell">
                         <Avatar className="h-9 w-9">
@@ -149,15 +160,13 @@ export default function ClientsPage() {
                         </Avatar>
                       </TableCell>
                       <TableCell className="font-medium">{client.name}</TableCell>
-                      <TableCell>
+                      <TableCell>{client.neighborhood}</TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <div className="text-sm text-muted-foreground">{client.email}</div>
                         <div className="text-sm text-muted-foreground">{client.phone}</div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {client.address}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {new Date(client.createdAt).toLocaleDateString()}
+                        {client.startDate ? new Date(client.startDate).toLocaleDateString('pt-BR') : 'N/A'}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -173,8 +182,14 @@ export default function ClientsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleEditClick(client)}>Editar</DropdownMenuItem>
-                            <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleEditClick(client)}
+                            >
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                               <Link href={`/clients/${client.id}`}>Ver Mais</Link>
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-destructive">
                               Deletar
@@ -184,25 +199,28 @@ export default function ClientsPage() {
                       </TableCell>
                     </TableRow>
                   ))}
+                  {!isLoading && (!clientList || clientList.length === 0) && (
+                    <TableRow>
+                        <TableCell colSpan={6} className="text-center">Nenhum cliente encontrado. Adicione um novo cliente.</TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
             <CardFooter>
               <div className="text-xs text-muted-foreground">
-                Mostrando <strong>1-5</strong> de <strong>{clientList.length}</strong> clientes
+                Mostrando <strong>1-{clientList?.length ?? 0}</strong> de <strong>{clientList?.length ?? 0}</strong> clientes
               </div>
             </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>
-      {selectedClient && (
-        <ClientEditDialog 
-          client={selectedClient}
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          onClientUpdate={handleClientUpdate}
-        />
-      )}
+      <ClientEditDialog
+        client={selectedClient}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onClientUpdate={handleClientUpdate}
+      />
     </>
   );
 }

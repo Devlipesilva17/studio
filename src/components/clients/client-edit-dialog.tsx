@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Form,
   FormControl,
@@ -27,16 +26,20 @@ import {
 import type { Client } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { useAuth, useFirestore } from '@/firebase';
+import { doc, setDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
-  email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
-  phone: z.string().min(10, { message: 'O telefone deve ter pelo menos 10 caracteres.' }),
-  address: z.string().min(5, { message: 'O endereço deve ter pelo menos 5 caracteres.' }),
+  email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }).optional().or(z.literal('')),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  neighborhood: z.string().min(2, { message: 'O bairro deve ter pelo menos 2 caracteres.' }),
+  startDate: z.string().optional(),
 });
 
 type ClientEditDialogProps = {
-  client: Client;
+  client: Client | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onClientUpdate: (client: Client) => void;
@@ -50,49 +53,106 @@ export function ClientEditDialog({
 }: ClientEditDialogProps) {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = React.useState(false);
+  const auth = useAuth();
+  const firestore = useFirestore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: client.name,
-      email: client.email,
-      phone: client.phone,
-      address: client.address,
+      name: '',
+      email: '',
+      phone: '',
+      address: '',
+      neighborhood: '',
+      startDate: new Date().toISOString().split('T')[0],
     },
   });
   
   React.useEffect(() => {
-    form.reset({
-        name: client.name,
-        email: client.email,
-        phone: client.phone,
-        address: client.address,
-      });
-  }, [client, form])
+    if (client) {
+        form.reset({
+            name: client.name,
+            email: client.email || '',
+            phone: client.phone || '',
+            address: client.address || '',
+            neighborhood: client.neighborhood || '',
+            startDate: client.startDate ? new Date(client.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        });
+    } else {
+        form.reset({
+            name: '',
+            email: '',
+            phone: '',
+            address: '',
+            neighborhood: '',
+            startDate: new Date().toISOString().split('T')[0],
+        });
+    }
+  }, [client, form, open]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!auth.currentUser || !firestore) {
+        toast({
+            variant: "destructive",
+            title: "Erro de Autenticação",
+            description: "Você precisa estar logado para salvar um cliente.",
+        });
+        return;
+    }
     setIsSaving(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    const updatedClient = { ...client, ...values };
-    onClientUpdate(updatedClient);
-    setIsSaving(false);
-    onOpenChange(false);
+    try {
+        const clientData = {
+            ...values,
+            startDate: values.startDate ? new Date(values.startDate).toISOString() : new Date().toISOString(),
+            updatedAt: serverTimestamp(),
+        };
 
-    toast({
-      title: 'Cliente Atualizado!',
-      description: `As informações de ${updatedClient.name} foram salvas.`,
-    });
+        if (client?.id) {
+            // Update existing client
+            const clientRef = doc(firestore, `users/${auth.currentUser.uid}/clients`, client.id);
+            await setDoc(clientRef, {
+                ...clientData,
+                createdAt: client.createdAt, // preserve original creation date
+            }, { merge: true });
+            toast({
+                title: 'Cliente Atualizado!',
+                description: `As informações de ${values.name} foram salvas.`,
+            });
+        } else {
+            // Create new client
+            const collectionRef = collection(firestore, `users/${auth.currentUser.uid}/clients`);
+            await addDoc(collectionRef, {
+                ...clientData,
+                createdAt: serverTimestamp(),
+            });
+            toast({
+                title: 'Cliente Adicionado!',
+                description: `${values.name} foi adicionado à sua lista.`,
+            });
+        }
+        
+        onOpenChange(false);
+    } catch (error) {
+        console.error("Error saving client:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Salvar",
+            description: "Não foi possível salvar as informações do cliente. Tente novamente.",
+        });
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Editar Cliente</DialogTitle>
+          <DialogTitle>{client ? 'Editar Cliente' : 'Adicionar Cliente'}</DialogTitle>
           <DialogDescription>
-            Faça alterações nos dados do cliente aqui. Clique em salvar quando terminar.
+            {client ? 'Faça alterações nos dados do cliente aqui.' : 'Preencha os dados do novo cliente.'}
+             Clique em salvar quando terminar.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -103,6 +163,19 @@ export function ClientEditDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nome</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="neighborhood"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bairro</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -149,6 +222,19 @@ export function ClientEditDialog({
                 </FormItem>
               )}
             />
+             <FormField
+              control={form.control}
+              name="startDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Data de Início</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="secondary">
@@ -157,7 +243,7 @@ export function ClientEditDialog({
               </DialogClose>
               <Button type="submit" disabled={isSaving}>
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Salvar Alterações
+                Salvar
               </Button>
             </DialogFooter>
           </form>

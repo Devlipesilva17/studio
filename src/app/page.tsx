@@ -1,5 +1,9 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,6 +15,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PoolIcon } from '@/components/icons';
+import { useAuth, useUser } from '@/firebase/provider';
+import { signInAnonymously } from 'firebase/auth';
 
 export default function LoginPage() {
   const heroImage = {
@@ -19,6 +25,27 @@ export default function LoginPage() {
     imageUrl: 'https://picsum.photos/seed/pool-hero/1200/800',
     imageHint: 'modern pool',
   };
+
+  const auth = useAuth();
+  const router = useRouter();
+  const { user, isUserLoading } = useUser();
+
+  const handleLogin = async () => {
+    if (auth) {
+      try {
+        await signInAnonymously(auth);
+        // onAuthStateChanged will handle the redirect
+      } catch (error) {
+        console.error("Anonymous sign-in failed", error);
+      }
+    }
+  };
+
+  React.useEffect(() => {
+    if (!isUserLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, isUserLoading, router]);
 
   return (
     <div className="w-full lg:grid lg:min-h-[100vh] lg:grid-cols-2 xl:min-h-[100vh]">
@@ -30,7 +57,7 @@ export default function LoginPage() {
               <h1 className="text-3xl font-bold font-headline">PoolCare Pro</h1>
             </div>
             <p className="text-balance text-muted-foreground">
-              Digite seu e-mail abaixo para fazer login em sua conta
+              Entre com seu e-mail para acessar seu painel.
             </p>
           </div>
           <Card>
@@ -48,6 +75,7 @@ export default function LoginPage() {
                   type="email"
                   placeholder="m@exemplo.com"
                   required
+                  defaultValue="usuario@exemplo.com"
                 />
               </div>
               <div className="grid gap-2">
@@ -60,10 +88,10 @@ export default function LoginPage() {
                     Esqueceu sua senha?
                   </Link>
                 </div>
-                <Input id="password" type="password" required />
+                <Input id="password" type="password" required defaultValue="123456" />
               </div>
-              <Button type="submit" className="w-full" asChild>
-                <Link href="/dashboard">Login</Link>
+              <Button type="submit" className="w-full" onClick={handleLogin} disabled={isUserLoading}>
+                {isUserLoading ? 'Carregando...' : 'Login'}
               </Button>
             </CardContent>
           </Card>
