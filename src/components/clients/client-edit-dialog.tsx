@@ -32,7 +32,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
-  email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }).optional().or(z.literal('')),
   phone: z.string().optional(),
   address: z.string().optional(),
   neighborhood: z.string().min(2, { message: 'O bairro deve ter pelo menos 2 caracteres.' }),
@@ -61,7 +60,6 @@ export function ClientEditDialog({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      email: '',
       phone: '',
       address: '',
       neighborhood: '',
@@ -73,7 +71,6 @@ export function ClientEditDialog({
     if (client) {
         form.reset({
             name: client.name,
-            email: client.email || '',
             phone: client.phone || '',
             address: client.address || '',
             neighborhood: client.neighborhood || '',
@@ -82,7 +79,6 @@ export function ClientEditDialog({
     } else {
         form.reset({
             name: '',
-            email: '',
             phone: '',
             address: '',
             neighborhood: '',
@@ -105,6 +101,7 @@ export function ClientEditDialog({
     try {
         const clientData = {
             ...values,
+            email: client?.email || '', // Keep email if it exists, otherwise empty
             avatarUrl: client?.avatarUrl || `https://picsum.photos/seed/${values.name}/100/100`,
             startDate: values.startDate ? new Date(values.startDate).toISOString() : new Date().toISOString(),
             updatedAt: serverTimestamp(),
@@ -180,19 +177,6 @@ export function ClientEditDialog({
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Bairro</FormLabel>
-                        <FormControl>
-                            <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Email</FormLabel>
                         <FormControl>
                             <Input {...field} />
                         </FormControl>
