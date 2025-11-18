@@ -53,7 +53,7 @@ const formSchema = z.object({
   name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
   phone: z.string().optional(),
   address: z.string().optional(),
-  neighborhood: z.string().min(2, { message: 'A região deve ter pelo menos 2 caracteres.' }),
+  neighborhood: z.string().min(2, { message: 'O grupo deve ter pelo menos 2 caracteres.' }),
   startDate: z.string().optional(),
 });
 
@@ -237,7 +237,7 @@ export function ClientEditDialog({
                     name="neighborhood"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Região</FormLabel>
+                        <FormLabel>Grupo</FormLabel>
                         <FormControl>
                             <Input {...field} />
                         </FormControl>

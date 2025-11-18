@@ -128,7 +128,7 @@ export default function ClientsPage() {
                       <span className="sr-only">Imagem</span>
                     </TableHead>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Região</TableHead>
+                    <TableHead>Grupo</TableHead>
                     <TableHead className="hidden md:table-cell">
                       Contato
                     </TableHead>
