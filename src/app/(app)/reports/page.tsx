@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 import {
   Card,
@@ -8,24 +9,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { DUMMY_PAYMENTS, DUMMY_PRODUCTS, DUMMY_VISITS } from "@/lib/placeholder-data";
-
-const data = [
-    { name: "Jan", total: Math.floor(Math.random() * 5000) + 1000 },
-    { name: "Feb", total: Math.floor(Math.random() * 5000) + 1000 },
-    { name: "Mar", total: Math.floor(Math.random() * 5000) + 1000 },
-    { name: "Apr", total: Math.floor(Math.random() * 5000) + 1000 },
-    { name: "May", total: Math.floor(Math.random() * 5000) + 1000 },
-    { name: "Jun", total: Math.floor(Math.random() * 5000) + 1000 },
-    { name: "Jul", total: Math.floor(Math.random() * 5000) + 1000 },
-    { name: "Aug", total: Math.floor(Math.random() * 5000) + 1000 },
-    { name: "Sep", total: Math.floor(Math.random() * 5000) + 1000 },
-    { name: "Oct", total: Math.floor(Math.random() * 5000) + 1000 },
-    { name: "Nov", total: Math.floor(Math.random() * 5000) + 1000 },
-    { name: "Dec", total: Math.floor(Math.random() * 5000) + 1000 },
-];
+import { DUMMY_PAYMENTS, DUMMY_VISITS } from "@/lib/placeholder-data";
 
 export default function ReportsPage() {
+    const [chartData, setChartData] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        const data = [
+            { name: "Jan", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Feb", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Mar", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Apr", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "May", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Jun", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Jul", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Aug", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Sep", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Oct", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Nov", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Dec", total: Math.floor(Math.random() * 5000) + 1000 },
+        ];
+        setChartData(data);
+    }, []);
+
     const totalVisits = DUMMY_VISITS.filter(v => v.status === 'completed').length;
     const totalRevenue = DUMMY_PAYMENTS.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
     const productsUsedCount = DUMMY_VISITS.flatMap(v => v.productsUsed).reduce((sum, p) => sum + p.quantity, 0);
@@ -73,7 +79,7 @@ export default function ReportsPage() {
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={350}>
-                        <BarChart data={data}>
+                        <BarChart data={chartData}>
                             <XAxis
                                 dataKey="name"
                                 stroke="#888888"
