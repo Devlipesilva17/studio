@@ -11,6 +11,7 @@ import {
   Sparkles,
   PanelLeft,
   Search,
+  Settings,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,15 +34,15 @@ import { PoolIcon } from '@/components/icons';
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
-    { href: '/clients', icon: Users, label: 'Clients' },
-    { href: '/schedule', icon: Calendar, label: 'Schedule', badge: '2' },
-    { href: '/products', icon: FlaskConical, label: 'Products' },
-    { href: '/payments', icon: CreditCard, label: 'Payments' },
-    { href: '/reports', icon: BarChart3, label: 'Reports' },
+    { href: '/clients', icon: Users, label: 'Clientes' },
+    { href: '/schedule', icon: Calendar, label: 'Agenda', badge: '2' },
+    { href: '/products', icon: FlaskConical, label: 'Produtos' },
+    { href: '/payments', icon: CreditCard, label: 'Pagamentos' },
+    { href: '/reports', icon: BarChart3, label: 'Relatórios' },
     {
       href: '/recommendations',
       icon: Sparkles,
-      label: 'AI Recommendations',
+      label: 'Recomendações IA',
     },
   ];
 
@@ -59,7 +60,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </Link>
             <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
               <Bell className="h-4 w-4" />
-              <span className="sr-only">Toggle notifications</span>
+              <span className="sr-only">Ativar notificações</span>
             </Button>
           </div>
           <div className="flex-1">
@@ -93,7 +94,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 className="shrink-0 md:hidden"
               >
                 <PanelLeft className="h-5 w-5" />
-                <span className="sr-only">Toggle navigation menu</span>
+                <span className="sr-only">Alternar menu de navegação</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
@@ -129,27 +130,33 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search clients, products..."
+                  placeholder="Buscar clientes, produtos..."
                   className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
                 />
               </div>
             </form>
           </div>
+          <Link href="/settings">
+              <Button variant="outline" size="icon" className="rounded-full">
+                  <Settings className="h-5 w-5" />
+                  <span className="sr-only">Configurações</span>
+              </Button>
+          </Link>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
                 <div className="rounded-full w-8 h-8 bg-primary" />
-                <span className="sr-only">Toggle user menu</span>
+                <span className="sr-only">Alternar menu de usuário</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
+              <DropdownMenuItem>Configurações</DropdownMenuItem>
+              <DropdownMenuItem>Suporte</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/">Logout</Link>
+                <Link href="/">Sair</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
