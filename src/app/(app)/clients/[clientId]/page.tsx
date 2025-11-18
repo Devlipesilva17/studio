@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Save, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, RefreshCw, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -31,6 +31,22 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
+
+// WhatsApp Icon
+function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
+      <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.487 5.235 3.487 8.413.001 6.557-5.335 11.894-11.892 11.894-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.89-5.464 0-9.888 4.424-9.888 9.884 0 2.021.59 3.996 1.698 5.665l.33 1.02-1.218 4.459 4.549-1.186z" />
+    </svg>
+  );
+}
 
 const clientFormSchema = z.object({
   name: z.string().min(2, "Nome é obrigatório"),
@@ -115,13 +131,29 @@ export default function ClientDetailsPage({
         filterData: { filterType: 'sand', lastFilterChange: '', filterCapacity: 0 }
     }
   });
+
+   const formatPhoneNumber = (value: string) => {
+    if (!value) return '';
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 2) {
+      return `(${digits}`;
+    }
+    if (digits.length <= 6) {
+      return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    }
+    if (digits.length <= 10) {
+      return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    }
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+  };
   
   const resetForms = React.useCallback(() => {
     if (client) {
+        const formattedPhone = client.phone ? formatPhoneNumber(client.phone) : '';
         form.reset({
           client: {
             name: client.name || '',
-            phone: client.phone || '',
+            phone: formattedPhone,
             address: client.address || '',
             startDate: client.startDate ? new Date(client.startDate).toISOString().split('T')[0] : '',
             notes: client.notes || '',
@@ -165,8 +197,12 @@ export default function ClientDetailsPage({
       }
       setIsSaving(true);
       try {
+          const clientData = {
+              ...data.client,
+              phone: data.client.phone?.replace(/\D/g, '') || '',
+          }
           // --- Update Client Data ---
-          await updateDoc(clientRef, data.client);
+          await updateDoc(clientRef, clientData);
           
           // --- Update or Create Pool Data ---
           const poolData = {
@@ -228,6 +264,19 @@ export default function ClientDetailsPage({
         return 'text-foreground';
     }
   };
+  
+    const watchedPhone = form.watch('client.phone');
+    const watchedAddress = form.watch('client.address');
+
+    const cleanPhoneNumber = React.useMemo(() => watchedPhone?.replace(/\D/g, '') || '', [watchedPhone]);
+    const encodedAddress = encodeURIComponent(watchedAddress || '');
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    const whatsappUrl = `https://wa.me/55${cleanPhoneNumber}`;
+
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const formatted = formatPhoneNumber(e.target.value);
+      form.setValue('client.phone', formatted);
+    }
 
 
   if (isLoading) {
@@ -311,10 +360,34 @@ export default function ClientDetailsPage({
                     <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="client.phone" render={({ field }) => (
-                    <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem>
+                        <FormLabel>Telefone</FormLabel>
+                        <FormControl><Input {...field} onChange={handlePhoneChange} placeholder="(XX) XXXXX-XXXX" /></FormControl>
+                        {cleanPhoneNumber && (
+                           <Button variant="outline" size="sm" asChild className="mt-2 hover:bg-[#25D366] hover:text-white transition-colors">
+                               <Link href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                                    <WhatsAppIcon className="mr-2 h-4 w-4" />
+                                    Abrir no WhatsApp
+                               </Link>
+                           </Button>
+                        )}
+                        <FormMessage />
+                    </FormItem>
                 )} />
                 <FormField control={form.control} name="client.address" render={({ field }) => (
-                    <FormItem><FormLabel>Endereço</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem>
+                        <FormLabel>Endereço</FormLabel>
+                        <FormControl><Input {...field} /></FormControl>
+                        {watchedAddress && (
+                           <Button variant="outline" size="sm" asChild className="mt-2 hover:bg-[#4285F4] hover:text-white transition-colors">
+                             <Link href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
+                                <MapPin className="mr-2 h-4 w-4" />
+                                Abrir no Google Maps
+                           </Link>
+                           </Button>
+                        )}
+                        <FormMessage />
+                    </FormItem>
                 )} />
                 <FormField control={form.control} name="client.startDate" render={({ field }) => (
                     <FormItem><FormLabel>Data de Início</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
@@ -430,7 +503,7 @@ export default function ClientDetailsPage({
                             <FormItem><FormLabel>Última Troca</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="filterData.filterCapacity" render={({ field }) => (
-                            <FormItem className="md:col-span-2"><FormLabel>Capacidade do Filtro (kg/cv)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Capacidade do Filtro (kg/cv)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                     </>
                 )}
@@ -441,3 +514,4 @@ export default function ClientDetailsPage({
   );
 }
 
+    
