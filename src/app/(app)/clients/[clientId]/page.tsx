@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
-import { doc, collection, query, setDoc, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, query, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import type { Client, Pool } from '@/lib/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -492,7 +492,7 @@ export default function ClientDetailsPage({
                         <FormItem><FormControl><RadioGroupItem value="oval" id="oval" /></FormControl><FormLabel htmlFor="oval" className="ml-2">Oval</FormLabel></FormItem>
                     </RadioGroup></FormControl><FormMessage /></FormItem>
                 )} />
-                 <div className="grid md:grid-cols-4 gap-6">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                     <FormField control={form.control} name="poolDimensions.length" render={({ field }) => (
                         <FormItem><FormLabel>{watchedPoolType === 'circular' ? 'Diâmetro (m)' : 'Comprimento (m)'}</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
@@ -605,7 +605,3 @@ export default function ClientDetailsPage({
     </Form>
   );
 }
-
-    
-
-    
