@@ -1,0 +1,535 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the PoolCare Pro application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "companyName": {
+          "type": "string",
+          "description": "The name of the company the user belongs to."
+        },
+        "companyLogo": {
+          "type": "string",
+          "description": "URL of the company logo image.",
+          "format": "uri"
+        },
+        "language": {
+          "type": "string",
+          "description": "Preferred language of the user (e.g., PT-BR, ES)."
+        },
+        "theme": {
+          "type": "string",
+          "description": "Preferred theme of the user (light or dark)."
+        },
+        "notificationPrefs": {
+          "type": "string",
+          "description": "Stringified JSON object that represents notification preferences, such as whether to sync scheduled visits or completed services to Google Calendar, and which clients and neighborhoods to include."
+        }
+      },
+      "required": [
+        "id",
+        "email"
+      ]
+    },
+    "Client": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Client",
+      "type": "object",
+      "description": "Represents a client with one or more pools.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the client entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the client."
+        },
+        "phone": {
+          "type": "string",
+          "description": "Phone number of the client."
+        },
+        "address": {
+          "type": "string",
+          "description": "Address of the client."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "Date when the client started service.",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string",
+          "description": "General notes about the client."
+        },
+        "poolIds": {
+          "type": "array",
+          "description": "References to Pools. (Relationship: Client 1:N Pool)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Pool": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Pool",
+      "type": "object",
+      "description": "Represents a pool associated with a client.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the pool entity."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Reference to Client. (Relationship: Client 1:N Pool)"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of the pool (quadrilateral, circular, oval)."
+        },
+        "length": {
+          "type": "number",
+          "description": "Length of the pool."
+        },
+        "width": {
+          "type": "number",
+          "description": "Width/diameter of the pool."
+        },
+        "averageDepth": {
+          "type": "number",
+          "description": "Average depth of the pool."
+        },
+        "ph": {
+          "type": "number",
+          "description": "Current pH level of the pool."
+        },
+        "chlorine": {
+          "type": "number",
+          "description": "Free chlorine level of the pool (ppm)."
+        },
+        "alkalinity": {
+          "type": "number",
+          "description": "Alkalinity level of the pool (ppm)."
+        },
+        "calciumHardness": {
+          "type": "number",
+          "description": "Calcium hardness of the pool (ppm)."
+        },
+        "material": {
+          "type": "string",
+          "description": "Material of the pool (fiber, masonry, vinyl)."
+        },
+        "hasStains": {
+          "type": "boolean",
+          "description": "Indicates whether the pool has stains."
+        },
+        "hasScale": {
+          "type": "boolean",
+          "description": "Indicates whether the pool has scale buildup."
+        },
+        "waterQuality": {
+          "type": "string",
+          "description": "Water quality description (green, cloudy, crystal clear)."
+        },
+        "filterType": {
+          "type": "string",
+          "description": "Type of filter (sand, cartridge, polyester)."
+        },
+        "lastFilterChange": {
+          "type": "string",
+          "description": "Date of the last filter change.",
+          "format": "date-time"
+        },
+        "filterPressure": {
+          "type": "number",
+          "description": "Filter pressure."
+        },
+        "filterCapacity": {
+          "type": "number",
+          "description": "Filter capacity."
+        }
+      },
+      "required": [
+        "id",
+        "clientId"
+      ]
+    },
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a product used for pool maintenance.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the product entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the product."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the product."
+        },
+        "cost": {
+          "type": "number",
+          "description": "Cost of the product."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Visit": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Visit",
+      "type": "object",
+      "description": "Represents a scheduled or completed visit to a client's pool.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the visit entity."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Reference to Client. (Relationship: Client 1:N Visit)"
+        },
+        "scheduleId": {
+          "type": "string",
+          "description": "Reference to Schedule. (Relationship: Schedule 1:N Visit)"
+        },
+        "dateTime": {
+          "type": "string",
+          "description": "Date and time of the visit.",
+          "format": "date-time"
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Indicates whether the visit is completed."
+        },
+        "productIds": {
+          "type": "array",
+          "description": "References to Products used during the visit. (Relationship: Visit N:N Product)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "beforePhotos": {
+          "type": "array",
+          "description": "URLs of before-visit photos.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "afterPhotos": {
+          "type": "array",
+          "description": "URLs of after-visit photos.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "clientId",
+        "dateTime"
+      ]
+    },
+    "Schedule": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Schedule",
+      "type": "object",
+      "description": "Represents a scheduled event for a pool visit.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the schedule entity."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Reference to Client. (Relationship: Client 1:N Schedule)"
+        },
+        "dateTime": {
+          "type": "string",
+          "description": "Scheduled date and time.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the schedule (pending, completed, overdue)."
+        }
+      },
+      "required": [
+        "id",
+        "clientId",
+        "dateTime"
+      ]
+    },
+    "Payment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Payment",
+      "type": "object",
+      "description": "Represents a payment made by a client.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the payment entity."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Reference to Client. (Relationship: Client 1:N Payment)"
+        },
+        "visitId": {
+          "type": "string",
+          "description": "Reference to Visit. (Relationship: Visit 1:1 Payment)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount paid."
+        },
+        "paymentDate": {
+          "type": "string",
+          "description": "Date of the payment.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the payment (paid, pending)."
+        }
+      },
+      "required": [
+        "id",
+        "clientId",
+        "amount"
+      ]
+    },
+    "Report": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Report",
+      "type": "object",
+      "description": "Represents a generated financial or usage report.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the report entity."
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of the report (financial, product usage, visits)."
+        },
+        "dateGenerated": {
+          "type": "string",
+          "description": "Date when the report was generated.",
+          "format": "date-time"
+        },
+        "data": {
+          "type": "string",
+          "description": "Stringified JSON data of the report contents."
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "dateGenerated"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles and settings.  This structure is used for user-specific data and authentication purposes.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/clients/{clientId}",
+        "definition": {
+          "entityName": "Client",
+          "schema": {
+            "$ref": "#/backend/entities/Client"
+          },
+          "description": "Stores client information associated with a specific user.  Allows each user to manage their own clients. ",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "clientId",
+              "description": "The unique identifier for the client."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/clients/{clientId}/pools/{poolId}",
+        "definition": {
+          "entityName": "Pool",
+          "schema": {
+            "$ref": "#/backend/entities/Pool"
+          },
+          "description": "Stores pool details associated with a specific client. Enables managing multiple pools per client.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "clientId",
+              "description": "The unique identifier for the client."
+            },
+            {
+              "name": "poolId",
+              "description": "The unique identifier for the pool."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Stores a global catalog of products available for pool maintenance.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "The unique identifier for the product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/clients/{clientId}/schedules/{scheduleId}",
+        "definition": {
+          "entityName": "Schedule",
+          "schema": {
+            "$ref": "#/backend/entities/Schedule"
+          },
+          "description": "Stores schedule entries for client visits.  This structure ensures that schedules are tied to specific clients and users.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "clientId",
+              "description": "The unique identifier for the client."
+            },
+            {
+              "name": "scheduleId",
+              "description": "The unique identifier for the schedule entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/clients/{clientId}/visits/{visitId}",
+        "definition": {
+          "entityName": "Visit",
+          "schema": {
+            "$ref": "#/backend/entities/Visit"
+          },
+          "description": "Stores visit logs associated with a specific client and user, detailing products used, photos, and visit status. Enables detailed tracking of each visit.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "clientId",
+              "description": "The unique identifier for the client."
+            },
+            {
+              "name": "visitId",
+              "description": "The unique identifier for the visit."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/clients/{clientId}/payments/{paymentId}",
+        "definition": {
+          "entityName": "Payment",
+          "schema": {
+            "$ref": "#/backend/entities/Payment"
+          },
+          "description": "Stores payment information for a specific client. Allows tracking payments made by clients.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "clientId",
+              "description": "The unique identifier for the client."
+            },
+            {
+              "name": "paymentId",
+              "description": "The unique identifier for the payment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/reports/{reportId}",
+        "definition": {
+          "entityName": "Report",
+          "schema": {
+            "$ref": "#/backend/entities/Report"
+          },
+          "description": "Stores generated reports associated with a specific user. This structure allows for user-specific reporting.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "reportId",
+              "description": "The unique identifier for the report."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the PoolCare Pro application's requirements for managing clients, pools, schedules, visits, payments, and reports, while ensuring data consistency and security. The key design principles are Authorization Independence, Clarity of Intent, and structural segregation.\n\nAuthorization Independence is achieved by avoiding hierarchical authorization dependencies. For example, instead of relying on `get()` calls to parent documents to determine access to subcollections, relevant authorization data (such as user roles or membership maps) are denormalized into the documents themselves or separate role collections.\n\nStructural Segregation is used to separate data with different security requirements into distinct collections. For instance, user profiles are stored in a dedicated collection (`/users/{userId}`) with specific rules, while client-related data is stored separately. This simplifies security rules and prevents unintended access.\n\nAccess Modeling follows consistent patterns. User-owned data, such as settings, is stored under the `/users/{userId}` path. Collaborative data, if any, would use a membership map. Global roles are managed via existence checks in dedicated role collections.\n\nTo support QAPs (Rules are not Filters) the structure allows for efficient querying and listing of resources based on ownership and roles. For example, listing clients or schedules associated with a specific user can be done securely without complex filtering in rules.\n\nThe denormalization strategy ensures atomic operations and avoids cascading failures. By copying necessary authorization data into child documents, transactions and batch writes can be performed without the risk of violating security rules due to missing parent data. This significantly improves the robustness and debuggability of the application."
+  }
+}
