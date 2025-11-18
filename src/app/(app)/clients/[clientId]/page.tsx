@@ -96,12 +96,12 @@ const fullClientProfileSchema = z.object({
 
 
 export default function ClientDetailsPage({
-  params: routeParams,
+  params,
 }: {
   params: { clientId: string };
 }) {
   const router = useRouter();
-  const { clientId } = React.use(Promise.resolve(routeParams));
+  const { clientId } = params;
 
   const { user } = useUser();
   const firestore = useFirestore();
