@@ -15,7 +15,7 @@ import { PoolIcon } from '@/components/icons';
 export default function LoginPage() {
   const heroImage = {
     id: 'pool-hero',
-    description: 'A beautiful modern swimming pool at dusk.',
+    description: 'Uma bela piscina moderna ao entardecer.',
     imageUrl: 'https://picsum.photos/seed/pool-hero/1200/800',
     imageHint: 'modern pool',
   };
@@ -30,14 +30,14 @@ export default function LoginPage() {
               <h1 className="text-3xl font-bold font-headline">PoolCare Pro</h1>
             </div>
             <p className="text-balance text-muted-foreground">
-              Enter your email below to login to your account
+              Digite seu e-mail abaixo para fazer login em sua conta
             </p>
           </div>
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">Login</CardTitle>
               <CardDescription>
-                Welcome back to your pool maintenance dashboard.
+                Bem-vindo de volta ao seu painel de manutenção de piscinas.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
@@ -46,18 +46,18 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="m@exemplo.com"
                   required
                 />
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Senha</Label>
                   <Link
                     href="#"
                     className="ml-auto inline-block text-sm underline"
                   >
-                    Forgot your password?
+                    Esqueceu sua senha?
                   </Link>
                 </div>
                 <Input id="password" type="password" required />

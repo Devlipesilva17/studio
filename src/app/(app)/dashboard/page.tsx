@@ -43,15 +43,25 @@ import {
   export default function Dashboard() {
     const [todayVisits, setTodayVisits] = React.useState<typeof DUMMY_VISITS>([]);
     const [upcomingVisits, setUpcomingVisits] = React.useState<typeof DUMMY_VISITS>([]);
+    const [totalRevenue, setTotalRevenue] = React.useState(0);
+    const [pendingPayments, setPendingPayments] = React.useState<typeof DUMMY_PAYMENTS>([]);
+    const [recentClients, setRecentClients] = React.useState<typeof DUMMY_CLIENTS>([]);
+    const [locale, setLocale] = React.useState('pt-BR');
+
 
     React.useEffect(() => {
         const todayString = new Date().toDateString();
         setTodayVisits(DUMMY_VISITS.filter(v => new Date(v.scheduledDate).toDateString() === todayString && v.status === 'pending'));
         setUpcomingVisits(DUMMY_VISITS.filter(v => new Date(v.scheduledDate) >= new Date()).slice(0, 5));
-    }, []);
+        setTotalRevenue(DUMMY_PAYMENTS.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0));
+        setPendingPayments(DUMMY_PAYMENTS.filter(p => p.status === 'pending'));
+        setRecentClients(DUMMY_CLIENTS.slice(0, 5));
+        
+        // In a real app, you'd get this from user settings
+        const userLocale = navigator.language || 'pt-BR';
+        setLocale(userLocale);
 
-    const totalRevenue = DUMMY_PAYMENTS.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
-    const pendingPayments = DUMMY_PAYMENTS.filter(p => p.status === 'pending');
+    }, []);
     
     return (
         <>
@@ -62,52 +72,52 @@ import {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Total Revenue
+                  Receita Total
                 </CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${totalRevenue.toLocaleString('en-US')}</div>
+                <div className="text-2xl font-bold">R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2}) }</div>
                 <p className="text-xs text-muted-foreground">
-                  +20.1% from last month
+                  +20.1% do último mês
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Active Clients
+                  Clientes Ativos
                 </CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">+{DUMMY_CLIENTS.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  +2 since last month
+                  +2 desde o último mês
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
+                <CardTitle className="text-sm font-medium">Pagamentos Pendentes</CardTitle>
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{pendingPayments.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  ${pendingPayments.reduce((sum, p) => sum + p.amount, 0).toLocaleString('en-US')} outstanding
+                  R$ {pendingPayments.reduce((sum, p) => sum + p.amount, 0).toLocaleString('pt-BR')} pendentes
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Today's Visits</CardTitle>
+                <CardTitle className="text-sm font-medium">Visitas de Hoje</CardTitle>
                 <CalendarCheck className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{todayVisits.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  scheduled for today
+                  agendadas para hoje
                 </p>
               </CardContent>
             </Card>
@@ -116,14 +126,14 @@ import {
             <Card className="xl:col-span-2">
               <CardHeader className="flex flex-row items-center">
                 <div className="grid gap-2">
-                  <CardTitle>Upcoming Visits</CardTitle>
+                  <CardTitle>Próximas Visitas</CardTitle>
                   <CardDescription>
-                    Recent visits from your clients.
+                    Visitas recentes de seus clientes.
                   </CardDescription>
                 </div>
                 <Button asChild size="sm" className="ml-auto gap-1">
                   <Link href="/schedule">
-                    View All
+                    Ver Todas
                     <ArrowUpRight className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -132,14 +142,14 @@ import {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Client</TableHead>
+                      <TableHead>Cliente</TableHead>
                       <TableHead>
                         Status
                       </TableHead>
                       <TableHead>
-                        Date
+                        Data
                       </TableHead>
-                      <TableHead className="text-right">Time</TableHead>
+                      <TableHead className="text-right">Hora</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -150,11 +160,11 @@ import {
                             </TableCell>
                             <TableCell>
                                 <Badge variant="outline" className={visit.status === 'completed' ? 'text-green-500 border-green-500' : 'text-amber-500 border-amber-500'}>
-                                    {visit.status}
+                                    {visit.status === 'completed' ? 'Concluída' : 'Pendente'}
                                 </Badge>
                             </TableCell>
                             <TableCell>
-                                {new Date(visit.scheduledDate).toLocaleDateString()}
+                                {new Date(visit.scheduledDate).toLocaleDateString(locale)}
                             </TableCell>
                             <TableCell className="text-right">{visit.time}</TableCell>
                         </TableRow>
@@ -165,13 +175,13 @@ import {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Recent Clients</CardTitle>
+                <CardTitle>Clientes Recentes</CardTitle>
                 <CardDescription>
-                  You have {DUMMY_CLIENTS.length} active clients.
+                  Você tem {DUMMY_CLIENTS.length} clientes ativos.
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-8">
-                {DUMMY_CLIENTS.slice(0, 5).map(client => (
+                {recentClients.map(client => (
                     <div key={client.id} className="flex items-center gap-4">
                         <Avatar className="hidden h-9 w-9 sm:flex">
                         <AvatarImage src={client.avatarUrl} alt="Avatar" />

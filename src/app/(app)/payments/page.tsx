@@ -34,28 +34,31 @@ import type { Payment } from '@/lib/types';
 
 export default function PaymentsPage() {
   const [payments, setPayments] = React.useState<Payment[]>([]);
+  const [locale, setLocale] = React.useState('pt-BR');
 
   React.useEffect(() => {
     setPayments(DUMMY_PAYMENTS);
+    const userLocale = navigator.language || 'pt-BR';
+    setLocale(userLocale);
   }, []);
 
   return (
     <>
       <div className="flex items-center">
-        <h1 className="text-lg font-semibold md:text-2xl font-headline">Payments</h1>
+        <h1 className="text-lg font-semibold md:text-2xl font-headline">Pagamentos</h1>
       </div>
       <Tabs defaultValue="all">
         <div className="flex items-center">
           <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="paid">Paid</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="all">Todos</TabsTrigger>
+            <TabsTrigger value="paid">Pagos</TabsTrigger>
+            <TabsTrigger value="pending">Pendentes</TabsTrigger>
           </TabsList>
           <div className="ml-auto flex items-center gap-2">
             <Button size="sm" variant="outline" className="h-8 gap-1">
               <File className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Export
+                Exportar
               </span>
             </Button>
           </div>
@@ -63,21 +66,21 @@ export default function PaymentsPage() {
         <TabsContent value="all">
           <Card>
             <CardHeader>
-              <CardTitle>Payments</CardTitle>
+              <CardTitle>Pagamentos</CardTitle>
               <CardDescription>
-                Track client payments and invoices.
+                Acompanhe os pagamentos e faturas dos clientes.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Client</TableHead>
+                    <TableHead>Cliente</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="hidden md:table-cell">Date</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="hidden md:table-cell">Data</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
                     <TableHead>
-                      <span className="sr-only">Actions</span>
+                      <span className="sr-only">Ações</span>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -93,14 +96,14 @@ export default function PaymentsPage() {
                           )}
                           variant="outline"
                         >
-                          {payment.status}
+                          {payment.status === 'paid' ? 'Pago' : 'Pendente'}
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {new Date(payment.date).toLocaleDateString()}
+                        {new Date(payment.date).toLocaleDateString(locale)}
                       </TableCell>
                       <TableCell className="text-right">
-                        ${payment.amount.toFixed(2)}
+                        R$ {payment.amount.toFixed(2).replace('.', ',')}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -111,13 +114,13 @@ export default function PaymentsPage() {
                               variant="ghost"
                             >
                               <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
+                              <span className="sr-only">Abrir menu</span>
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>View Client</DropdownMenuItem>
-                            <DropdownMenuItem>Mark as Paid</DropdownMenuItem>
+                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                            <DropdownMenuItem>Ver Cliente</DropdownMenuItem>
+                            <DropdownMenuItem>Marcar como Pago</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -128,7 +131,7 @@ export default function PaymentsPage() {
             </CardContent>
             <CardFooter>
               <div className="text-xs text-muted-foreground">
-                Showing <strong>1-{payments.length}</strong> of <strong>{payments.length}</strong> payments
+                Mostrando <strong>1-{payments.length}</strong> de <strong>{payments.length}</strong> pagamentos
               </div>
             </CardFooter>
           </Card>

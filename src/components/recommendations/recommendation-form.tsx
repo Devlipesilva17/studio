@@ -25,9 +25,9 @@ import { Loader2, WandSparkles } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 
 const formSchema = z.object({
-    clientId: z.string().min(1, { message: "Please select a client." }),
-    poolId: z.string().min(1, { message: "Please select a pool." }),
-    lastTreatment: z.string().min(10, { message: "Please describe the last treatment in more detail." }),
+    clientId: z.string().min(1, { message: "Por favor, selecione um cliente." }),
+    poolId: z.string().min(1, { message: "Por favor, selecione uma piscina." }),
+    lastTreatment: z.string().min(10, { message: "Por favor, descreva o último tratamento com mais detalhes." }),
     algaeLevel: z.enum(["none", "low", "medium", "high"]),
     pHLevel: z.coerce.number().min(6.0).max(8.0),
 })
@@ -94,8 +94,8 @@ export function RecommendationForm({ clients, pools }: RecommendationFormProps) 
         <div className="grid md:grid-cols-2 gap-8 items-start">
         <Card>
             <CardHeader>
-                <CardTitle>Pool Conditions</CardTitle>
-                <CardDescription>Fill in the details about the pool's current state.</CardDescription>
+                <CardTitle>Condições da Piscina</CardTitle>
+                <CardDescription>Preencha os detalhes sobre o estado atual da piscina.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
@@ -105,11 +105,11 @@ export function RecommendationForm({ clients, pools }: RecommendationFormProps) 
                             name="clientId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Client</FormLabel>
+                                    <FormLabel>Cliente</FormLabel>
                                     <Select onValueChange={handleClientChange} defaultValue={field.value}>
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select a client" />
+                                                <SelectValue placeholder="Selecione um cliente" />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -127,11 +127,11 @@ export function RecommendationForm({ clients, pools }: RecommendationFormProps) 
                             name="poolId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Pool</FormLabel>
+                                    <FormLabel>Piscina</FormLabel>
                                     <Select onValueChange={handlePoolChange} value={field.value} disabled={!selectedClientId}>
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select a pool" />
+                                                <SelectValue placeholder="Selecione uma piscina" />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -149,12 +149,12 @@ export function RecommendationForm({ clients, pools }: RecommendationFormProps) 
                             name="lastTreatment"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Last Treatment</FormLabel>
+                                <FormLabel>Último Tratamento</FormLabel>
                                 <FormControl>
-                                    <Textarea placeholder="e.g., Added 2 chlorine tabs, balanced pH..." {...field} />
+                                    <Textarea placeholder="ex: Adicionado 2 tabletes de cloro, pH balanceado..." {...field} />
                                 </FormControl>
                                 <FormDescription>
-                                    Describe the last service performed on this pool.
+                                    Descreva o último serviço realizado nesta piscina.
                                 </FormDescription>
                                 <FormMessage />
                                 </FormItem>
@@ -165,18 +165,18 @@ export function RecommendationForm({ clients, pools }: RecommendationFormProps) 
                             name="algaeLevel"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Algae Level</FormLabel>
+                                <FormLabel>Nível de Algas</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select algae level" />
+                                        <SelectValue placeholder="Selecione o nível de algas" />
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="none">None</SelectItem>
-                                        <SelectItem value="low">Low</SelectItem>
-                                        <SelectItem value="medium">Medium</SelectItem>
-                                        <SelectItem value="high">High</SelectItem>
+                                        <SelectItem value="none">Nenhum</SelectItem>
+                                        <SelectItem value="low">Baixo</SelectItem>
+                                        <SelectItem value="medium">Médio</SelectItem>
+                                        <SelectItem value="high">Alto</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />
@@ -188,7 +188,7 @@ export function RecommendationForm({ clients, pools }: RecommendationFormProps) 
                             name="pHLevel"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>pH Level</FormLabel>
+                                <FormLabel>Nível de pH</FormLabel>
                                 <FormControl>
                                     <Input type="number" step="0.1" {...field} />
                                 </FormControl>
@@ -198,7 +198,7 @@ export function RecommendationForm({ clients, pools }: RecommendationFormProps) 
                         />
                         <Button type="submit" disabled={isLoading}>
                             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <WandSparkles className="mr-2 h-4 w-4" />}
-                             Get Recommendations
+                             Obter Recomendações
                         </Button>
                     </form>
                 </Form>
@@ -206,8 +206,8 @@ export function RecommendationForm({ clients, pools }: RecommendationFormProps) 
         </Card>
         <Card className="bg-secondary/50">
             <CardHeader>
-                <CardTitle>AI Recommendations</CardTitle>
-                <CardDescription>Products and dosages suggested by AI.</CardDescription>
+                <CardTitle>Recomendações da IA</CardTitle>
+                <CardDescription>Produtos e dosagens sugeridos pela IA.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 {isLoading && (
@@ -221,14 +221,14 @@ export function RecommendationForm({ clients, pools }: RecommendationFormProps) 
                     recommendations.recommendedProducts.map((rec, index) => (
                         <div key={index} className="p-4 rounded-lg border bg-card">
                             <h3 className="font-semibold text-primary">{rec.productName}</h3>
-                            <p className="font-mono text-sm bg-muted p-2 rounded-md my-2">Dosage: {rec.dosage}</p>
+                            <p className="font-mono text-sm bg-muted p-2 rounded-md my-2">Dosagem: {rec.dosage}</p>
                             <p className="text-sm text-muted-foreground">{rec.reason}</p>
                         </div>
                     ))
                 ) : (
                     !isLoading && <div className="text-center text-muted-foreground py-10">
                         <WandSparkles className="mx-auto h-12 w-12 text-gray-400" />
-                        <p className="mt-2">Your recommendations will appear here.</p>
+                        <p className="mt-2">Suas recomendações aparecerão aqui.</p>
                     </div>
                 )}
             </CardContent>
