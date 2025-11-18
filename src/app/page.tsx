@@ -16,7 +16,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PoolIcon } from '@/components/icons';
 import { useAuth, useUser } from '@/firebase/provider';
-import { signInAnonymously } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const heroImage = {
@@ -26,26 +31,90 @@ export default function LoginPage() {
     imageHint: 'modern pool',
   };
 
+  const [isSignUp, setIsSignUp] = React.useState(false);
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [isProcessing, setIsProcessing] = React.useState(false);
+
   const auth = useAuth();
   const router = useRouter();
   const { user, isUserLoading } = useUser();
+  const { toast } = useToast();
 
-  const handleLogin = async () => {
-    if (auth) {
-      try {
-        await signInAnonymously(auth);
-        // onAuthStateChanged will handle the redirect
-      } catch (error) {
-        console.error("Anonymous sign-in failed", error);
+  const handleAuthAction = async () => {
+    if (!auth) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro de Inicialização',
+        description: 'Serviço de autenticação não disponível.',
+      });
+      return;
+    }
+    if (!email || !password) {
+        toast({
+            variant: "destructive",
+            title: "Campos Vazios",
+            description: "Por favor, preencha o e-mail e a senha.",
+        });
+        return;
+    }
+
+
+    setIsProcessing(true);
+
+    try {
+      if (isSignUp) {
+        await createUserWithEmailAndPassword(auth, email, password);
+        // O onAuthStateChanged irá redirecionar após o cadastro e login automático
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+        // O onAuthStateChanged irá redirecionar
       }
+    } catch (error: any) {
+      let title = 'Erro no Login';
+      let description = 'Ocorreu um erro desconhecido. Tente novamente.';
+
+      switch (error.code) {
+        case 'auth/invalid-email':
+          title = 'E-mail Inválido';
+          description = 'O formato do e-mail digitado não é válido.';
+          break;
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+          title = 'Credenciais Inválidas';
+          description = 'E-mail ou senha inválidos. Verifique e tente novamente.';
+          break;
+        case 'auth/email-already-in-use':
+          title = 'E-mail já Cadastrado';
+          description = 'Este e-mail já está em uso. Tente fazer login.';
+          break;
+        case 'auth/weak-password':
+          title = 'Senha Fraca';
+          description = 'A senha deve ter pelo menos 6 caracteres.';
+          break;
+        default:
+          console.error('Authentication error:', error);
+      }
+
+      toast({
+        variant: 'destructive',
+        title: title,
+        description: description,
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   React.useEffect(() => {
+    // Redireciona se o usuário já estiver logado (e não estiver mais carregando)
     if (!isUserLoading && user) {
       router.push('/dashboard');
     }
   }, [user, isUserLoading, router]);
+
+  const isLoading = isProcessing || isUserLoading;
 
   return (
     <div className="w-full lg:grid lg:min-h-[100vh] lg:grid-cols-2 xl:min-h-[100vh]">
@@ -57,14 +126,20 @@ export default function LoginPage() {
               <h1 className="text-3xl font-bold font-headline">PoolCare Pro</h1>
             </div>
             <p className="text-balance text-muted-foreground">
-              Entre com seu e-mail para acessar seu painel.
+              {isSignUp
+                ? 'Crie sua conta para começar a gerenciar'
+                : 'Entre com seu e-mail para acessar seu painel'}
             </p>
           </div>
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">Login</CardTitle>
+              <CardTitle className="text-2xl">
+                {isSignUp ? 'Criar Conta' : 'Login'}
+              </CardTitle>
               <CardDescription>
-                Bem-vindo ao seu novo painel de manutenção de piscinas.
+                {isSignUp
+                  ? 'Preencha os campos para se registrar.'
+                  : 'Bem-vindo ao seu painel de manutenção.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
@@ -75,23 +150,45 @@ export default function LoginPage() {
                   type="email"
                   placeholder="m@exemplo.com"
                   required
-                  defaultValue="usuario@exemplo.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Senha</Label>
-                  <Link
-                    href="#"
-                    className="ml-auto inline-block text-sm underline"
-                  >
-                    Esqueceu sua senha?
-                  </Link>
+                  {!isSignUp && (
+                    <Link
+                      href="#"
+                      className="ml-auto inline-block text-sm underline"
+                    >
+                      Esqueceu sua senha?
+                    </Link>
+                  )}
                 </div>
-                <Input id="password" type="password" required defaultValue="123456" />
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                />
               </div>
-              <Button type="submit" className="w-full" onClick={handleLogin} disabled={isUserLoading}>
-                {isUserLoading ? 'Carregando...' : 'Login'}
+              <Button onClick={handleAuthAction} type="submit" className="w-full" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSignUp ? 'Criar Conta' : 'Login'}
+              </Button>
+               <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setIsSignUp(!isSignUp)}
+                disabled={isLoading}
+              >
+                {isSignUp
+                  ? 'Já tem uma conta? Fazer Login'
+                  : 'Não tem uma conta? Crie uma'}
               </Button>
             </CardContent>
           </Card>

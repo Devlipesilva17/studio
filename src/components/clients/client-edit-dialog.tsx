@@ -31,6 +31,7 @@ import { doc, setDoc, serverTimestamp, addDoc, collection } from 'firebase/fires
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 // WhatsApp Icon
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -70,6 +71,7 @@ export function ClientEditDialog({
   onClientUpdate,
 }: ClientEditDialogProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [isSaving, setIsSaving] = React.useState(false);
   const auth = useAuth();
   const firestore = useFirestore();
@@ -88,6 +90,7 @@ export function ClientEditDialog({
   });
   
   const formatPhoneNumber = (value: string) => {
+    if (!value) return '';
     const digits = value.replace(/\D/g, '');
     if (digits.length <= 2) {
       return `(${digits}`;
@@ -132,6 +135,7 @@ export function ClientEditDialog({
             variant: "destructive",
             title: "Erro de Autenticação",
             description: "Você precisa estar logado para salvar um cliente.",
+             action: <Button onClick={() => router.push('/')}>Fazer Login</Button>
         });
         return;
     }
