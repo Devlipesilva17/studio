@@ -91,4 +91,19 @@
   input[type="number"] {
     -moz-appearance: textfield; /* Firefox */
   }
+
+  .day-has-visit {
+    position: relative;
+  }
+  .day-has-visit::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #20b2aa;
+  }
 }

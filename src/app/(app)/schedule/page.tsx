@@ -180,7 +180,7 @@ export default function SchedulePage() {
                                     hasVisit: daysWithVisits
                                 }}
                                 modifiersClassNames={{
-                                    hasVisit: 'bg-primary/20 text-primary-foreground rounded-full'
+                                    hasVisit: 'day-has-visit'
                                 }}
                             />
                         </CardContent>
