@@ -518,112 +518,36 @@ export default function ClientDetailsPage({
 
         {/* METRAGENS E DIMENSÕES */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-center">Metragens e Dimensões</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <FormField
-              control={form.control}
-              name="poolDimensions.type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo da Piscina</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      className="flex gap-4"
-                    >
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <RadioGroupItem value="quadrilateral" id="quadrilateral" />
-                        </FormControl>
-                        <FormLabel htmlFor="quadrilateral" className="font-normal">
-                          Quadrilateral
-                        </FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <RadioGroupItem value="circular" id="circular" />
-                        </FormControl>
-                        <FormLabel htmlFor="circular" className="font-normal">
-                          Circular
-                        </FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <RadioGroupItem value="oval" id="oval" />
-                        </FormControl>
-                        <FormLabel htmlFor="oval" className="font-normal">
-                          Oval
-                        </FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-              <FormField
-                control={form.control}
-                name="poolDimensions.length"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {watchedPoolType === 'circular'
-                        ? 'Diâmetro'
-                        : 'Comprimento'}
-                    </FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {watchedPoolType !== 'circular' && (
-                <FormField
-                  control={form.control}
-                  name="poolDimensions.width"
-                  render={({ field }) => (
+            <CardHeader><CardTitle className="text-center">Metragens e Dimensões</CardTitle></CardHeader>
+            <CardContent className="space-y-6">
+                <FormField control={form.control} name="poolDimensions.type" render={({ field }) => (
+                    <FormItem><FormLabel>Tipo da Piscina</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
+                        <FormItem><FormControl><RadioGroupItem value="quadrilateral" id="quadrilateral" /></FormControl><FormLabel htmlFor="quadrilateral" className="font-normal ml-2">Quadrilateral</FormLabel></FormItem>
+                        <FormItem><FormControl><RadioGroupItem value="circular" id="circular" /></FormControl><FormLabel htmlFor="circular" className="font-normal ml-2">Circular</FormLabel></FormItem>
+                        <FormItem><FormControl><RadioGroupItem value="oval" id="oval" /></FormControl><FormLabel htmlFor="oval" className="font-normal ml-2">Oval</FormLabel></FormItem>
+                    </RadioGroup></FormControl><FormMessage /></FormItem>
+                )} />
+                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                    <FormField control={form.control} name="poolDimensions.length" render={({ field }) => (
+                        <FormItem><FormLabel>{watchedPoolType === 'circular' ? 'Diâmetro' : 'Comprimento'}</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    {watchedPoolType !== 'circular' && (
+                        <FormField control={form.control} name="poolDimensions.width" render={({ field }) => (
+                            <FormItem><FormLabel>Largura</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                    )}
+                    <FormField control={form.control} name="poolDimensions.averageDepth" render={({ field }) => (
+                        <FormItem><FormLabel>Profundidade Média</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
                     <FormItem>
-                      <FormLabel>Largura</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.1" {...field} />
-                      </FormControl>
-                      <FormMessage />
+                        <FormLabel>Litragem</FormLabel>
+                        <FormControl>
+                            <Input type="text" readOnly value={calculatedVolume.toLocaleString('pt-BR')} className="font-bold bg-muted" />
+                        </FormControl>
+                        <FormDescription>Volume calculado</FormDescription>
                     </FormItem>
-                  )}
-                />
-              )}
-              <FormField
-                control={form.control}
-                name="poolDimensions.averageDepth"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Profundidade Média</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormItem>
-                <FormLabel>Litragem</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    readOnly
-                    value={calculatedVolume.toLocaleString('pt-BR')}
-                    className="font-bold bg-muted"
-                  />
-                </FormControl>
-                <FormDescription>Volume calculado</FormDescription>
-              </FormItem>
-            </div>
-          </CardContent>
+                </div>
+            </CardContent>
         </Card>
 
         {/* DADOS QUÍMICOS E TÉCNICOS */}
@@ -658,22 +582,22 @@ export default function ClientDetailsPage({
             </CardContent>
         </Card>
 
-        {/* PROPRIEDADES DA PISCINA */}
+        {/* PROPRIEDADES DA PISCINA E FILTRO */}
         <Card>
             <CardHeader><CardTitle className="text-center">Propriedades da Piscina</CardTitle></CardHeader>
             <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <FormField control={form.control} name="poolProperties.material" render={({ field }) => (
-                    <FormItem><FormLabel>Material</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4">
-                        <FormItem><FormControl><RadioGroupItem value="fiber" id="fiber" /></FormControl><FormLabel htmlFor="fiber" className="ml-2">Fibra</FormLabel></FormItem>
-                        <FormItem><FormControl><RadioGroupItem value="masonry" id="masonry" /></FormControl><FormLabel htmlFor="masonry" className="ml-2">Alvenaria</FormLabel></FormItem>
-                        <FormItem><FormControl><RadioGroupItem value="vinyl" id="vinyl" /></FormControl><FormLabel htmlFor="vinyl" className="ml-2">Vinil</FormLabel></FormItem>
+                    <FormItem><FormLabel>Material</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
+                        <FormItem><FormControl><RadioGroupItem value="fiber" id="fiber" /></FormControl><FormLabel htmlFor="fiber" className="ml-2 font-normal">Fibra</FormLabel></FormItem>
+                        <FormItem><FormControl><RadioGroupItem value="masonry" id="masonry" /></FormControl><FormLabel htmlFor="masonry" className="ml-2 font-normal">Alvenaria</FormLabel></FormItem>
+                        <FormItem><FormControl><RadioGroupItem value="vinyl" id="vinyl" /></FormControl><FormLabel htmlFor="vinyl" className="ml-2 font-normal">Vinil</FormLabel></FormItem>
                     </RadioGroup></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="poolProperties.waterQuality" render={({ field }) => (
-                     <FormItem><FormLabel>Qualidade da Água</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4">
-                        <FormItem><FormControl><RadioGroupItem value="green" id="green" /></FormControl><FormLabel htmlFor="green" className="ml-2">Verde</FormLabel></FormItem>
-                        <FormItem><FormControl><RadioGroupItem value="cloudy" id="cloudy" /></FormControl><FormLabel htmlFor="cloudy" className="ml-2">Turva</FormLabel></FormItem>
-                        <FormItem><FormControl><RadioGroupItem value="crystal-clear" id="crystal-clear" /></FormControl><FormLabel htmlFor="crystal-clear" className="ml-2">Cristalina</FormLabel></FormItem>
+                     <FormItem><FormLabel>Qualidade da Água</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
+                        <FormItem><FormControl><RadioGroupItem value="green" id="green" /></FormControl><FormLabel htmlFor="green" className="ml-2 font-normal">Verde</FormLabel></FormItem>
+                        <FormItem><FormControl><RadioGroupItem value="cloudy" id="cloudy" /></FormControl><FormLabel htmlFor="cloudy" className="ml-2 font-normal">Turva</FormLabel></FormItem>
+                        <FormItem><FormControl><RadioGroupItem value="crystal-clear" id="crystal-clear" /></FormControl><FormLabel htmlFor="crystal-clear" className="ml-2 font-normal">Cristalina</FormLabel></FormItem>
                     </RadioGroup></FormControl><FormMessage /></FormItem>
                 )} />
                  <FormField control={form.control} name="poolProperties.hasStains" render={({ field }) => (
@@ -682,63 +606,67 @@ export default function ClientDetailsPage({
                  <FormField control={form.control} name="poolProperties.hasScale" render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Incrustações?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
                 )} />
-                 <div className="md:col-span-2 lg:col-span-3 h-px bg-border my-2" />
-                <FormField control={form.control} name="filterData.filterType" render={({ field }) => (
-                    <FormItem><FormLabel>Tipo do Filtro</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
-                        <SelectContent>
-                            <SelectItem value="sand">Areia</SelectItem>
-                            <SelectItem value="cartridge">Cartucho</SelectItem>
-                            <SelectItem value="polyester">Poliéster</SelectItem>
-                        </SelectContent>
-                    </Select><FormMessage /></FormItem>
-                )} />
 
-                {watchedFilterType === 'sand' && (
-                    <>
-                        <FormField
-                            control={form.control}
-                            name="filterData.lastFilterChange"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                <FormLabel>Última Troca</FormLabel>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button
-                                        variant={"outline"}
-                                        className={cn(
-                                            "pl-3 text-left font-normal",
-                                            !field.value && "text-muted-foreground"
-                                        )}
-                                        >
-                                        {field.value ? (
-                                            format(field.value, "PPP", { locale: ptBR })
-                                        ) : (
-                                            <span>Escolha uma data</span>
-                                        )}
-                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                        </Button>
-                                    </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                        mode="single"
-                                        selected={field.value}
-                                        onSelect={field.onChange}
-                                        initialFocus
-                                    />
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField control={form.control} name="filterData.filterCapacity" render={({ field }) => (
-                            <FormItem><FormLabel>Capacidade do Filtro (kg/cv)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                    </>
-                )}
+                <div className="md:col-span-2 lg:col-span-3 h-px bg-border my-2" />
+                
+                <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FormField control={form.control} name="filterData.filterType" render={({ field }) => (
+                        <FormItem><FormLabel>Tipo do Filtro</FormLabel><Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                <SelectItem value="sand">Areia</SelectItem>
+                                <SelectItem value="cartridge">Cartucho</SelectItem>
+                                <SelectItem value="polyester">Poliéster</SelectItem>
+                            </SelectContent>
+                        </Select><FormMessage /></FormItem>
+                    )} />
+
+                    {watchedFilterType === 'sand' && (
+                        <>
+                            <FormField
+                                control={form.control}
+                                name="filterData.lastFilterChange"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                    <FormLabel>Última Troca</FormLabel>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                                "pl-3 text-left font-normal",
+                                                !field.value && "text-muted-foreground"
+                                            )}
+                                            >
+                                            {field.value ? (
+                                                format(field.value, "PPP", { locale: ptBR })
+                                            ) : (
+                                                <span>Escolha uma data</span>
+                                            )}
+                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={field.value}
+                                            onSelect={field.onChange}
+                                            initialFocus
+                                        />
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField control={form.control} name="filterData.filterCapacity" render={({ field }) => (
+                                <FormItem><FormLabel>Capacidade do Filtro (kg/cv)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                        </>
+                    )}
+                </div>
             </CardContent>
         </Card>
       </form>
