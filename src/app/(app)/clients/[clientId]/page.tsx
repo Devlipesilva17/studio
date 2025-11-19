@@ -529,7 +529,7 @@ export default function ClientDetailsPage({
                         <FormItem><FormControl><RadioGroupItem value="oval" id="oval" /></FormControl><FormLabel htmlFor="oval" className="font-normal ml-2">Oval</FormLabel></FormItem>
                     </RadioGroup></FormControl><FormMessage /></FormItem>
                 )} />
-                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
                     {watchedPoolType === 'circular' ? (
                       <>
                         <FormField control={form.control} name="poolDimensions.length" render={({ field }) => (
@@ -690,3 +690,5 @@ export default function ClientDetailsPage({
     </Form>
   );
 }
+
+    
