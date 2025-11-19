@@ -253,10 +253,10 @@ export default function ClientDetailsPage({
   const calculatedVolume = React.useMemo(() => {
     const { type, length = 0, width = 0, averageDepth = 0 } = watchedPoolDimensions;
     if (!averageDepth || averageDepth <= 0) return 0;
-  
+
     let volumeM3 = 0;
     const OVAL_CIRCULAR_FACTOR = 0.785;
-  
+
     switch (type) {
       case 'quadrilateral':
         if (length > 0 && width > 0) {
@@ -264,8 +264,8 @@ export default function ClientDetailsPage({
         }
         break;
       case 'circular':
-        if (length > 0 && width > 0) { // Using length and width for diameter1 and diameter2
-           volumeM3 = length * width * averageDepth * OVAL_CIRCULAR_FACTOR;
+         if (length > 0) { // Only diameter (length) is needed
+           volumeM3 = length * length * averageDepth * OVAL_CIRCULAR_FACTOR;
         }
         break;
       case 'oval':
@@ -529,26 +529,17 @@ export default function ClientDetailsPage({
                         <FormItem><FormControl><RadioGroupItem value="oval" id="oval" /></FormControl><FormLabel htmlFor="oval" className="font-normal ml-2">Oval</FormLabel></FormItem>
                     </RadioGroup></FormControl><FormMessage /></FormItem>
                 )} />
-                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-                    {watchedPoolType === 'circular' ? (
-                      <>
-                        <FormField control={form.control} name="poolDimensions.length" render={({ field }) => (
-                            <FormItem><FormLabel>Diâmetro 1</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+                    <FormField control={form.control} name="poolDimensions.length" render={({ field }) => (
+                        <FormItem><FormLabel>{watchedPoolType === 'circular' ? 'Diâmetro' : 'Comprimento'}</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    
+                    {watchedPoolType !== 'circular' && (
                         <FormField control={form.control} name="poolDimensions.width" render={({ field }) => (
-                          <FormItem><FormLabel>Diâmetro 2</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Largura</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
-                      </>
-                    ) : (
-                      <>
-                        <FormField control={form.control} name="poolDimensions.length" render={({ field }) => (
-                            <FormItem><FormLabel>Comprimento</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name="poolDimensions.width" render={({ field }) => (
-                          <FormItem><FormLabel>Largura</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                      </>
                     )}
+
                     <FormField control={form.control} name="poolDimensions.averageDepth" render={({ field }) => (
                         <FormItem><FormLabel>Profundidade Média</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
@@ -627,62 +618,86 @@ export default function ClientDetailsPage({
                 <div className="h-px bg-border my-2" />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-                    <FormField control={form.control} name="filterData.filterType" render={({ field }) => (
-                        <FormItem><FormLabel>Tipo do Filtro</FormLabel><Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
-                            <SelectContent>
-                                <SelectItem value="sand">Areia</SelectItem>
-                                <SelectItem value="cartridge">Cartucho</SelectItem>
-                                <SelectItem value="polyester">Poliéster</SelectItem>
-                            </SelectContent>
-                        </Select><FormMessage /></FormItem>
-                    )} />
-
-                    {watchedFilterType === 'sand' && (
-                        <>
-                            <FormField
-                                control={form.control}
-                                name="filterData.lastFilterChange"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-col">
-                                    <FormLabel>Última Troca</FormLabel>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                        <FormControl>
-                                            <Button
-                                            variant={"outline"}
-                                            className={cn(
-                                                "pl-3 text-left font-normal",
-                                                !field.value && "text-muted-foreground"
-                                            )}
-                                            >
-                                            {field.value ? (
-                                                format(field.value, "PPP", { locale: ptBR })
-                                            ) : (
-                                                <span>Escolha uma data</span>
-                                            )}
-                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                            </Button>
-                                        </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={field.value}
-                                            onSelect={field.onChange}
-                                            initialFocus
-                                        />
-                                        </PopoverContent>
-                                    </Popover>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField control={form.control} name="filterData.filterCapacity" render={({ field }) => (
-                                <FormItem><FormLabel>Capacidade do Filtro (kg/cv)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                        </>
+                  <FormField
+                    control={form.control}
+                    name="filterData.filterType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo do Filtro</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="sand">Areia</SelectItem>
+                            <SelectItem value="cartridge">Cartucho</SelectItem>
+                            <SelectItem value="polyester">Poliéster</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
                     )}
+                  />
+
+                  {watchedFilterType === 'sand' ? (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="filterData.lastFilterChange"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Última Troca</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={'outline'}
+                                    className={cn(
+                                      'pl-3 text-left font-normal',
+                                      !field.value && 'text-muted-foreground'
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, 'PPP', { locale: ptBR })
+                                    ) : (
+                                      <span>Escolha uma data</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="filterData.filterCapacity"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Capacidade do Filtro (kg/cv)</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  ) : (
+                    <div /> // Placeholder to maintain grid structure
+                  )}
                 </div>
             </CardContent>
         </Card>
@@ -690,5 +705,3 @@ export default function ClientDetailsPage({
     </Form>
   );
 }
-
-    
