@@ -102,7 +102,6 @@ export default function ClientDetailsPage({
 }) {
   const router = useRouter();
   const { clientId } = params;
-
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -226,11 +225,15 @@ export default function ClientDetailsPage({
           } else {
               // Create new pool
               const poolsCollectionRef = collection(firestore, `users/${user.uid}/clients/${clientId}/pools`);
-              await addDoc(poolsCollectionRef, {
+              const newPool = await addDoc(poolsCollectionRef, {
                   ...poolData,
                   createdAt: serverTimestamp(),
                   name: "Piscina Principal", // Default name for new pool
               });
+              // Update client with new pool ID
+              await updateDoc(clientRef, {
+                  poolIds: [...(client?.poolIds || []), newPool.id]
+              })
           }
 
           toast({ title: "Sucesso!", description: "Ficha do cliente atualizada." });
@@ -261,9 +264,8 @@ export default function ClientDetailsPage({
         }
         break;
       case 'circular':
-        const diameter = length > 0 ? length : 0;
-        if (diameter > 0) {
-           volumeM3 = diameter * diameter * averageDepth * OVAL_CIRCULAR_FACTOR;
+        if (length > 0 && width > 0) { // Using length and width for diameter1 and diameter2
+           volumeM3 = length * width * averageDepth * OVAL_CIRCULAR_FACTOR;
         }
         break;
       case 'oval':
@@ -528,13 +530,24 @@ export default function ClientDetailsPage({
                     </RadioGroup></FormControl><FormMessage /></FormItem>
                 )} />
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                    <FormField control={form.control} name="poolDimensions.length" render={({ field }) => (
-                        <FormItem><FormLabel>{watchedPoolType === 'circular' ? 'Diâmetro' : 'Comprimento'}</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    {watchedPoolType !== 'circular' && (
-                        <FormField control={form.control} name="poolDimensions.width" render={({ field }) => (
-                            <FormItem><FormLabel>Largura</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+                    {watchedPoolType === 'circular' ? (
+                      <>
+                        <FormField control={form.control} name="poolDimensions.length" render={({ field }) => (
+                            <FormItem><FormLabel>Diâmetro 1</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
+                        <FormField control={form.control} name="poolDimensions.width" render={({ field }) => (
+                          <FormItem><FormLabel>Diâmetro 2</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                      </>
+                    ) : (
+                      <>
+                        <FormField control={form.control} name="poolDimensions.length" render={({ field }) => (
+                            <FormItem><FormLabel>Comprimento</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="poolDimensions.width" render={({ field }) => (
+                          <FormItem><FormLabel>Largura</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                      </>
                     )}
                     <FormField control={form.control} name="poolDimensions.averageDepth" render={({ field }) => (
                         <FormItem><FormLabel>Profundidade Média</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
@@ -585,31 +598,36 @@ export default function ClientDetailsPage({
         {/* PROPRIEDADES DA PISCINA E FILTRO */}
         <Card>
             <CardHeader><CardTitle className="text-center">Propriedades da Piscina</CardTitle></CardHeader>
-            <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <FormField control={form.control} name="poolProperties.material" render={({ field }) => (
-                    <FormItem><FormLabel>Material</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
-                        <FormItem><FormControl><RadioGroupItem value="fiber" id="fiber" /></FormControl><FormLabel htmlFor="fiber" className="ml-2 font-normal">Fibra</FormLabel></FormItem>
-                        <FormItem><FormControl><RadioGroupItem value="masonry" id="masonry" /></FormControl><FormLabel htmlFor="masonry" className="ml-2 font-normal">Alvenaria</FormLabel></FormItem>
-                        <FormItem><FormControl><RadioGroupItem value="vinyl" id="vinyl" /></FormControl><FormLabel htmlFor="vinyl" className="ml-2 font-normal">Vinil</FormLabel></FormItem>
-                    </RadioGroup></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="poolProperties.waterQuality" render={({ field }) => (
-                     <FormItem><FormLabel>Qualidade da Água</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
-                        <FormItem><FormControl><RadioGroupItem value="green" id="green" /></FormControl><FormLabel htmlFor="green" className="ml-2 font-normal">Verde</FormLabel></FormItem>
-                        <FormItem><FormControl><RadioGroupItem value="cloudy" id="cloudy" /></FormControl><FormLabel htmlFor="cloudy" className="ml-2 font-normal">Turva</FormLabel></FormItem>
-                        <FormItem><FormControl><RadioGroupItem value="crystal-clear" id="crystal-clear" /></FormControl><FormLabel htmlFor="crystal-clear" className="ml-2 font-normal">Cristalina</FormLabel></FormItem>
-                    </RadioGroup></FormControl><FormMessage /></FormItem>
-                )} />
-                 <FormField control={form.control} name="poolProperties.hasStains" render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Manchas?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
-                )} />
-                 <FormField control={form.control} name="poolProperties.hasScale" render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Incrustações?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
-                )} />
+            <CardContent className="space-y-6">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <FormField control={form.control} name="poolProperties.material" render={({ field }) => (
+                        <FormItem><FormLabel>Material</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4 pt-2">
+                            <FormItem><FormControl><RadioGroupItem value="fiber" id="fiber" /></FormControl><FormLabel htmlFor="fiber" className="ml-2 font-normal">Fibra</FormLabel></FormItem>
+                            <FormItem><FormControl><RadioGroupItem value="masonry" id="masonry" /></FormControl><FormLabel htmlFor="masonry" className="ml-2 font-normal">Alvenaria</FormLabel></FormItem>
+                            <FormItem><FormControl><RadioGroupItem value="vinyl" id="vinyl" /></FormControl><FormLabel htmlFor="vinyl" className="ml-2 font-normal">Vinil</FormLabel></FormItem>
+                        </RadioGroup></FormControl><FormMessage /></FormItem>
+                    )} />
+                     <FormField control={form.control} name="poolProperties.waterQuality" render={({ field }) => (
+                        <FormItem><FormLabel>Qualidade da Água</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4 pt-2">
+                            <FormItem><FormControl><RadioGroupItem value="green" id="green" /></FormControl><FormLabel htmlFor="green" className="ml-2 font-normal">Verde</FormLabel></FormItem>
+                            <FormItem><FormControl><RadioGroupItem value="cloudy" id="cloudy" /></FormControl><FormLabel htmlFor="cloudy" className="ml-2 font-normal">Turva</FormLabel></FormItem>
+                            <FormItem><FormControl><RadioGroupItem value="crystal-clear" id="crystal-clear" /></FormControl><FormLabel htmlFor="crystal-clear" className="ml-2 font-normal">Cristalina</FormLabel></FormItem>
+                        </RadioGroup></FormControl><FormMessage /></FormItem>
+                    )} />
+                </div>
 
-                <div className="md:col-span-2 lg:col-span-3 h-px bg-border my-2" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField control={form.control} name="poolProperties.hasStains" render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Manchas?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
+                    )} />
+                    <FormField control={form.control} name="poolProperties.hasScale" render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Incrustações?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
+                    )} />
+                </div>
                 
-                <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="h-px bg-border my-2" />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
                     <FormField control={form.control} name="filterData.filterType" render={({ field }) => (
                         <FormItem><FormLabel>Tipo do Filtro</FormLabel><Select onValueChange={field.onChange} value={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
