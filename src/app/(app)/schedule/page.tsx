@@ -7,7 +7,6 @@ import { DUMMY_VISITS } from "@/lib/placeholder-data";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
 import type { Visit } from '@/lib/types';
 import {
   Sheet,
@@ -181,7 +180,7 @@ export default function SchedulePage() {
                                     hasVisit: daysWithVisits
                                 }}
                                 modifiersClassNames={{
-                                    hasVisit: 'bg-primary/20 text-primary-foreground rounded-md'
+                                    hasVisit: 'bg-primary/20 text-primary-foreground rounded-full'
                                 }}
                             />
                         </CardContent>
