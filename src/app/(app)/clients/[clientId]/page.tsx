@@ -529,7 +529,7 @@ export default function ClientDetailsPage({
                         <FormItem><FormControl><RadioGroupItem value="oval" id="oval" /></FormControl><FormLabel htmlFor="oval" className="font-normal ml-2">Oval</FormLabel></FormItem>
                     </RadioGroup></FormControl><FormMessage /></FormItem>
                 )} />
-                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
                     {watchedPoolType === 'circular' ? (
                       <>
                         <FormField control={form.control} name="poolDimensions.length" render={({ field }) => (
@@ -595,11 +595,11 @@ export default function ClientDetailsPage({
             </CardContent>
         </Card>
 
-        {/* PROPRIEDADES DA PISCINA E FILTRO */}
+        {/* PROPRIEDADES DA PISCINA */}
         <Card>
             <CardHeader><CardTitle className="text-center">Propriedades da Piscina</CardTitle></CardHeader>
             <CardContent className="space-y-6">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                     <FormField control={form.control} name="poolProperties.material" render={({ field }) => (
                         <FormItem><FormLabel>Material</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4 pt-2">
                             <FormItem><FormControl><RadioGroupItem value="fiber" id="fiber" /></FormControl><FormLabel htmlFor="fiber" className="ml-2 font-normal">Fibra</FormLabel></FormItem>
@@ -615,7 +615,6 @@ export default function ClientDetailsPage({
                         </RadioGroup></FormControl><FormMessage /></FormItem>
                     )} />
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField control={form.control} name="poolProperties.hasStains" render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Manchas?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
@@ -627,7 +626,7 @@ export default function ClientDetailsPage({
                 
                 <div className="h-px bg-border my-2" />
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
                     <FormField control={form.control} name="filterData.filterType" render={({ field }) => (
                         <FormItem><FormLabel>Tipo do Filtro</FormLabel><Select onValueChange={field.onChange} value={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
