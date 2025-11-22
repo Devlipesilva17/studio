@@ -394,29 +394,29 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                         <FormLabel>Tipo da Piscina</FormLabel>
                         <FormControl>
                             <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="grid grid-cols-3 gap-4"
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="grid grid-cols-3 gap-4"
                             >
                             {(['quadrilateral', 'circular', 'oval'] as const).map(type => (
                                 <FormItem key={type} className="flex-1">
-                                <FormControl>
-                                    <RadioGroupItem value={type} className="sr-only" />
-                                </FormControl>
-                                <FormLabel
-                                    htmlFor={type}
-                                    className={cn(
-                                    'flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer',
-                                    field.value === type && 'border-primary'
-                                    )}
-                                >
-                                    <div className="mb-2 h-14 w-20 flex items-center justify-center">
-                                    {type === 'quadrilateral' && <div className="w-16 h-12 bg-accent/50 border-2 border-accent rounded-sm"></div>}
-                                    {type === 'circular' && <div className="w-14 h-14 bg-accent/50 border-2 border-accent rounded-full"></div>}
-                                    {type === 'oval' && <div className="w-20 h-12 bg-accent/50 border-2 border-accent rounded-full"></div>}
-                                    </div>
-                                    <span className="text-sm font-medium capitalize">{type === 'quadrilateral' ? 'Retangular' : type}</span>
-                                </FormLabel>
+                                    <FormControl>
+                                        <RadioGroupItem value={type} className="sr-only" />
+                                    </FormControl>
+                                    <FormLabel
+                                        htmlFor={type}
+                                        className={cn(
+                                        'flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 cursor-pointer transition-all hover:shadow-md hover:-translate-y-1',
+                                        field.value === type ? 'border-primary shadow-md' : 'hover:border-accent'
+                                        )}
+                                    >
+                                        <div className="mb-2 h-14 w-20 flex items-center justify-center">
+                                            {type === 'quadrilateral' && <div className="w-16 h-12 bg-accent/50 border-2 border-accent rounded-sm"></div>}
+                                            {type === 'circular' && <div className="w-14 h-14 bg-accent/50 border-2 border-accent rounded-full"></div>}
+                                            {type === 'oval' && <div className="w-20 h-12 bg-accent/50 border-2 border-accent rounded-full"></div>}
+                                        </div>
+                                        <span className="text-sm font-medium capitalize">{type === 'quadrilateral' ? 'Retangular' : type}</span>
+                                    </FormLabel>
                                 </FormItem>
                             ))}
                             </RadioGroup>
@@ -426,28 +426,28 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                     )}
                 />
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6 items-end">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-6 items-end">
                     {/* Inputs de dimensão */}
                     {watchedPoolData.type === 'quadrilateral' && 
                         <>
-                            <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Comprimento (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full md:w-32" /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Largura (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full md:w-32"/></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Comprimento (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full sm:w-32" /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Largura (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full sm:w-32"/></FormControl><FormMessage /></FormItem>)} />
                         </>
                     }
                     {watchedPoolData.type === 'circular' &&
-                        <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full md:w-32"/></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full sm:w-32"/></FormControl><FormMessage /></FormItem>)} />
                     }
                     {watchedPoolData.type === 'oval' && 
                         <>
-                            <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro Maior (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full md:w-32"/></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Diâmetro Menor (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full md:w-32"/></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro Maior (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full sm:w-32"/></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Diâmetro Menor (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full sm:w-32"/></FormControl><FormMessage /></FormItem>)} />
                         </>
                     }
-                    <FormField control={form.control} name="pool.averageDepth" render={({ field }) => (<FormItem><FormLabel>Profundidade Média (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full md:w-32"/></FormControl><FormMessage /></FormItem>)} />
-                    
-                    {/* Botão Calcular */}
-                    <div className="col-span-2 md:col-span-4 flex justify-center mt-2">
-                        {watchedPoolData.volumeMode === 'auto' && (
+                    <FormField control={form.control} name="pool.averageDepth" render={({ field }) => (<FormItem><FormLabel>Profundidade Média (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full sm:w-32"/></FormControl><FormMessage /></FormItem>)} />
+
+                     {/* Botão Calcular */}
+                    <div className="col-span-1 sm:col-span-2 md:col-span-1 flex items-end">
+                         {watchedPoolData.volumeMode === 'auto' && (
                             <Button type="button" onClick={handleCalculateVolume} className='w-full md:w-auto'>
                                 <Calculator className="mr-2 h-4 w-4" /> Calcular Volume
                             </Button>
@@ -457,7 +457,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
 
                 <div className='flex items-end gap-2 pt-4'>
                     <FormField control={form.control} name="pool.volume" render={({ field }) => (
-                        <FormItem className='flex-1 max-w-xs'>
+                        <FormItem className='flex-1 max-w-[150px]'>
                         <FormLabel>Litragem</FormLabel>
                         <FormControl>
                             <div className='relative'>
