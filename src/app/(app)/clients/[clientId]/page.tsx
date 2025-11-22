@@ -33,6 +33,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Image from 'next/image';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
 
 // Custom Icons
 function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -145,7 +147,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
           width: pool?.width || undefined,
           averageDepth: pool?.averageDepth || undefined,
           volume: pool?.volume || undefined,
-          volumeMode: pool?.volumeMode || 'auto',
+          volumeMode: (pool as any)?.volumeMode || 'auto',
           ph: pool?.ph ?? 7.2,
           chlorine: pool?.chlorine ?? 1.0,
           alkalinity: pool?.alkalinity ?? 80,
@@ -384,56 +386,90 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
         <Card>
             <CardHeader><CardTitle className="text-center">Metragens e Dimensões</CardTitle></CardHeader>
             <CardContent className="space-y-6">
-                 <FormField control={form.control} name="pool.type" render={({ field }) => (
-                    <FormItem>
+                <FormField
+                    control={form.control}
+                    name="pool.type"
+                    render={({ field }) => (
+                        <FormItem className="space-y-3">
                         <FormLabel>Tipo da Piscina</FormLabel>
                         <FormControl>
-                          <div className='grid grid-cols-3 gap-2 md:gap-4'>
+                            <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-3 gap-4"
+                            >
                             {(['quadrilateral', 'circular', 'oval'] as const).map(type => (
-                              <div key={type} className={cn('relative rounded-md border-2 p-2 cursor-pointer transition-all hover:border-primary/80', field.value === type ? 'border-primary shadow-md' : 'border-border')} onClick={() => field.onChange(type)}>
-                                <Image src={`/images/pool-${type}.png`} alt={type} width={80} height={80} className="mx-auto" />
-                                <p className='text-center text-sm font-medium mt-1 capitalize'>{type === 'quadrilateral' ? 'Retangular' : type}</p>
-                              </div>
+                                <FormItem key={type} className="flex-1">
+                                <FormControl>
+                                    <RadioGroupItem value={type} className="sr-only" />
+                                </FormControl>
+                                <FormLabel
+                                    htmlFor={type}
+                                    className={cn(
+                                    'flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer',
+                                    field.value === type && 'border-primary'
+                                    )}
+                                >
+                                    <div className="mb-2 h-14 w-20 flex items-center justify-center">
+                                    {type === 'quadrilateral' && <div className="w-16 h-12 bg-accent/50 border-2 border-accent rounded-sm"></div>}
+                                    {type === 'circular' && <div className="w-14 h-14 bg-accent/50 border-2 border-accent rounded-full"></div>}
+                                    {type === 'oval' && <div className="w-20 h-12 bg-accent/50 border-2 border-accent rounded-full"></div>}
+                                    </div>
+                                    <span className="text-sm font-medium capitalize">{type === 'quadrilateral' ? 'Retangular' : type}</span>
+                                </FormLabel>
+                                </FormItem>
                             ))}
-                          </div>
+                            </RadioGroup>
                         </FormControl>
                         <FormMessage />
-                    </FormItem>
-                )} />
+                        </FormItem>
+                    )}
+                />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 items-start">
-                     {watchedPoolData.type === 'quadrilateral' && 
-                      <>
-                        <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Comprimento</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Largura</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      </>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6 items-end">
+                    {/* Inputs de dimensão */}
+                    {watchedPoolData.type === 'quadrilateral' && 
+                        <>
+                            <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Comprimento (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full md:w-32" /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Largura (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full md:w-32"/></FormControl><FormMessage /></FormItem>)} />
+                        </>
                     }
                     {watchedPoolData.type === 'circular' &&
-                      <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full md:w-32"/></FormControl><FormMessage /></FormItem>)} />
                     }
                     {watchedPoolData.type === 'oval' && 
-                      <>
-                        <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro Maior</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Diâmetro Menor</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      </>
+                        <>
+                            <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro Maior (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full md:w-32"/></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Diâmetro Menor (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full md:w-32"/></FormControl><FormMessage /></FormItem>)} />
+                        </>
                     }
-                    <FormField control={form.control} name="pool.averageDepth" render={({ field }) => (<FormItem><FormLabel>Profundidade Média</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="pool.averageDepth" render={({ field }) => (<FormItem><FormLabel>Profundidade Média (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full md:w-32"/></FormControl><FormMessage /></FormItem>)} />
                     
-                    <div className='flex items-end gap-2 md:col-span-2 lg:col-span-4'>
-                      <FormField control={form.control} name="pool.volume" render={({ field }) => (
-                          <FormItem className='flex-1'>
-                            <FormLabel>Litragem</FormLabel>
-                            <FormControl>
-                                <div className='relative'>
-                                  <Droplets className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                                  <Input type="number" {...field} readOnly={watchedPoolData.volumeMode === 'auto'} className="font-bold bg-muted/50 pl-9" />
-                                </div>
-                            </FormControl>
-                            <FormDescription>Volume em litros (L)</FormDescription>
-                          </FormItem>
-                      )} />
-                       <FormField control={form.control} name="pool.volumeMode" render={({ field }) => (
-                          <FormItem className='flex flex-col'>
+                    {/* Botão Calcular */}
+                    <div className="col-span-2 md:col-span-4 flex justify-center mt-2">
+                        {watchedPoolData.volumeMode === 'auto' && (
+                            <Button type="button" onClick={handleCalculateVolume} className='w-full md:w-auto'>
+                                <Calculator className="mr-2 h-4 w-4" /> Calcular Volume
+                            </Button>
+                        )}
+                    </div>
+                </div>
+
+                <div className='flex items-end gap-2 pt-4'>
+                    <FormField control={form.control} name="pool.volume" render={({ field }) => (
+                        <FormItem className='flex-1 max-w-xs'>
+                        <FormLabel>Litragem</FormLabel>
+                        <FormControl>
+                            <div className='relative'>
+                                <Droplets className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                                <Input type="number" {...field} readOnly={watchedPoolData.volumeMode === 'auto'} className="font-bold bg-muted/50 pl-9" />
+                            </div>
+                        </FormControl>
+                        <FormDescription>Volume em litros (L)</FormDescription>
+                        </FormItem>
+                    )} />
+                    <FormField control={form.control} name="pool.volumeMode" render={({ field }) => (
+                        <FormItem className='flex flex-col'>
                             <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl><SelectTrigger className='w-[120px]'><SelectValue /></SelectTrigger></FormControl>
                                 <SelectContent>
@@ -441,15 +477,9 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                                     <SelectItem value="manual">Manual</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <FormDescription>Modo de cálculo</FormDescription>
-                          </FormItem>
-                      )} />
-                      {watchedPoolData.volumeMode === 'auto' && (
-                        <Button type="button" onClick={handleCalculateVolume} className='h-10'>
-                            <Calculator className="mr-2 h-4 w-4" /> Calcular
-                        </Button>
-                      )}
-                    </div>
+                            <FormDescription>Modo</FormDescription>
+                        </FormItem>
+                    )} />
                 </div>
             </CardContent>
         </Card>
@@ -475,7 +505,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
         <Card>
           <CardHeader><CardTitle className="text-center">Propriedades da Piscina</CardTitle></CardHeader>
           <CardContent className="space-y-6">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="pool.material" render={({ field }) => (
                     <FormItem><FormLabel>Material</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="fiber">Fibra</SelectItem><SelectItem value="masonry">Alvenaria</SelectItem><SelectItem value="vinyl">Vinil</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                 )} />
@@ -516,5 +546,3 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
     </Form>
   );
 }
-
-    
