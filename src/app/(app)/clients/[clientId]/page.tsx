@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Save, Loader2, RefreshCw, MapPin, CalendarIcon, Droplets } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, RefreshCw, MapPin, CalendarIcon, Droplets, Calculator } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -78,8 +78,8 @@ const fullClientProfileSchema = z.object({
 
 
 export default function ClientDetailsPage({ params }: { params: { clientId: string } }) {
-  const { clientId } = params;
   const router = useRouter();
+  const { clientId } = params;
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -168,11 +168,11 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
   }, [client, pool, resetForms]);
 
   const watchedPoolData = form.watch('pool');
-
-  React.useEffect(() => {
-    const { type, length = 0, width = 0, averageDepth = 0, volumeMode } = watchedPoolData;
+  
+  const handleCalculateVolume = () => {
+    const { type, length = 0, width = 0, averageDepth = 0 } = form.getValues('pool');
     
-    if (volumeMode === 'manual') return;
+    if (watchedPoolData.volumeMode === 'manual') return;
 
     let volumeM3 = 0;
     const OVAL_CIRCULAR_FACTOR = 0.785;
@@ -197,10 +197,8 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
         }
     }
     const finalVolume = Math.round(volumeM3 * 1000);
-    if (finalVolume !== form.getValues('pool.volume')) {
-        form.setValue('pool.volume', finalVolume > 0 ? finalVolume : undefined);
-    }
-  }, [watchedPoolData, form]);
+    form.setValue('pool.volume', finalVolume > 0 ? finalVolume : undefined);
+  };
 
 
   const onSubmit = async (data: z.infer<typeof fullClientProfileSchema>) => {
@@ -337,12 +335,12 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
             </div>
             <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={resetForms} disabled={isSaving}><RefreshCw className="mr-2 h-4 w-4" />Resetar</Button>
-                <Button type="submit" disabled={isSaving}>{isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Salvar</Button>
+                <Button type="submit" disabled={isSaving}>{isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Salvar Alterações</Button>
             </div>
         </div>
 
         <Card><CardHeader><CardTitle className="text-center">Dados Pessoais</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
             <FormField control={form.control} name="client.name" render={({ field }) => (<FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="client.phone" render={({ field }) => (
                 <FormItem><FormLabel>Telefone</FormLabel>
@@ -386,15 +384,15 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
         <Card>
             <CardHeader><CardTitle className="text-center">Metragens e Dimensões</CardTitle></CardHeader>
             <CardContent className="space-y-6">
-                <FormField control={form.control} name="pool.type" render={({ field }) => (
+                 <FormField control={form.control} name="pool.type" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Tipo da Piscina</FormLabel>
                         <FormControl>
-                          <div className='grid grid-cols-3 gap-4'>
+                          <div className='grid grid-cols-3 gap-2 md:gap-4'>
                             {(['quadrilateral', 'circular', 'oval'] as const).map(type => (
-                              <div key={type} className={cn('relative rounded-lg border-2 p-4 cursor-pointer transition-all', field.value === type ? 'border-primary shadow-md' : 'border-border')} onClick={() => field.onChange(type)}>
-                                <Image src={`/images/pool-${type}.png`} alt={type} width={100} height={100} className="mx-auto" />
-                                <p className='text-center font-medium mt-2 capitalize'>{type === 'quadrilateral' ? 'Retangular' : type}</p>
+                              <div key={type} className={cn('relative rounded-md border-2 p-2 cursor-pointer transition-all hover:border-primary/80', field.value === type ? 'border-primary shadow-md' : 'border-border')} onClick={() => field.onChange(type)}>
+                                <Image src={`/images/pool-${type}.png`} alt={type} width={80} height={80} className="mx-auto" />
+                                <p className='text-center text-sm font-medium mt-1 capitalize'>{type === 'quadrilateral' ? 'Retangular' : type}</p>
                               </div>
                             ))}
                           </div>
@@ -404,31 +402,37 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                 )} />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 items-start">
-                    { (watchedPoolData.type === 'quadrilateral' || watchedPoolData.type === 'oval') && 
-                      <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>{watchedPoolData.type === 'oval' ? 'Diâmetro Maior (m)' : 'Comprimento (m)'}</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                     {watchedPoolData.type === 'quadrilateral' && 
+                      <>
+                        <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Comprimento</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Largura</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      </>
                     }
-                    { watchedPoolData.type === 'circular' &&
-                      <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    {watchedPoolData.type === 'circular' &&
+                      <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     }
-                    { (watchedPoolData.type === 'quadrilateral' || watchedPoolData.type === 'oval') && 
-                      <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>{watchedPoolData.type === 'oval' ? 'Diâmetro Menor (m)' : 'Largura (m)'}</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    {watchedPoolData.type === 'oval' && 
+                      <>
+                        <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro Maior</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Diâmetro Menor</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      </>
                     }
-                    <FormField control={form.control} name="pool.averageDepth" render={({ field }) => (<FormItem><FormLabel>Profundidade Média (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="pool.averageDepth" render={({ field }) => (<FormItem><FormLabel>Profundidade Média</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     
-                    <div className='lg:col-span-2 flex items-end gap-4'>
+                    <div className='flex items-end gap-2 md:col-span-2 lg:col-span-4'>
                       <FormField control={form.control} name="pool.volume" render={({ field }) => (
                           <FormItem className='flex-1'>
                             <FormLabel>Litragem</FormLabel>
                             <FormControl>
                                 <div className='relative'>
                                   <Droplets className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                                  <Input type="number" {...field} readOnly={watchedPoolData.volumeMode === 'auto'} className="font-bold bg-muted pl-9" />
+                                  <Input type="number" {...field} readOnly={watchedPoolData.volumeMode === 'auto'} className="font-bold bg-muted/50 pl-9" />
                                 </div>
                             </FormControl>
                             <FormDescription>Volume em litros (L)</FormDescription>
                           </FormItem>
                       )} />
-                      <FormField control={form.control} name="pool.volumeMode" render={({ field }) => (
+                       <FormField control={form.control} name="pool.volumeMode" render={({ field }) => (
                           <FormItem className='flex flex-col'>
                             <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl><SelectTrigger className='w-[120px]'><SelectValue /></SelectTrigger></FormControl>
@@ -440,6 +444,11 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                             <FormDescription>Modo de cálculo</FormDescription>
                           </FormItem>
                       )} />
+                      {watchedPoolData.volumeMode === 'auto' && (
+                        <Button type="button" onClick={handleCalculateVolume} className='h-10'>
+                            <Calculator className="mr-2 h-4 w-4" /> Calcular
+                        </Button>
+                      )}
                     </div>
                 </div>
             </CardContent>
@@ -463,9 +472,10 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
           </CardContent>
         </Card>
 
-        <Card><CardHeader><CardTitle className="text-center">Propriedades da Piscina</CardTitle></CardHeader>
+        <Card>
+          <CardHeader><CardTitle className="text-center">Propriedades da Piscina</CardTitle></CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="pool.material" render={({ field }) => (
                     <FormItem><FormLabel>Material</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="fiber">Fibra</SelectItem><SelectItem value="masonry">Alvenaria</SelectItem><SelectItem value="vinyl">Vinil</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                 )} />
@@ -473,12 +483,12 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                   <FormItem><FormLabel>Qualidade da Água</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="green">Verde</SelectItem><SelectItem value="cloudy">Turva</SelectItem><SelectItem value="crystal-clear">Cristalina</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                 )} />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="pool.hasStains" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Manchas?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
                 <FormField control={form.control} name="pool.hasScale" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Incrustações?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
             </div>
             <div className="h-px bg-border my-2" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
               <FormField control={form.control} name="pool.filterType" render={({ field }) => (
                 <FormItem><FormLabel>Tipo do Filtro</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="sand">Areia</SelectItem><SelectItem value="cartridge">Cartucho</SelectItem><SelectItem value="polyester">Poliéster</SelectItem></SelectContent></Select><FormMessage /></FormItem>
               )}/>
