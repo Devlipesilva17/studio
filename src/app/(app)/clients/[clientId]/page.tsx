@@ -406,8 +406,8 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                                     <FormLabel
                                         htmlFor={type}
                                         className={cn(
-                                        'flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1',
-                                        'hover:bg-transparent hover:shadow-primary/20',
+                                        'flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 cursor-pointer transition-all',
+                                        'hover:shadow-lg hover:-translate-y-1 hover:border-primary/50',
                                         field.value === type ? 'border-primary shadow-lg' : ''
                                         )}
                                     >
@@ -427,41 +427,34 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                     )}
                 />
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] lg:grid-cols-[1fr_1fr_1fr_auto] gap-x-4 gap-y-6 items-end">
                     {watchedPoolData.type === 'quadrilateral' && 
                         <>
-                            <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Comprimento (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full sm:w-32" /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Largura (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full sm:w-32"/></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Comprimento</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="max-w-32" /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Largura</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="max-w-32"/></FormControl><FormMessage /></FormItem>)} />
                         </>
                     }
                     {watchedPoolData.type === 'circular' &&
-                        <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full sm:w-32"/></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="max-w-32"/></FormControl><FormMessage /></FormItem>)} />
                     }
                     {watchedPoolData.type === 'oval' && 
                         <>
-                            <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro Maior (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full sm:w-32"/></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Diâmetro Menor (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full sm:w-32"/></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro Maior</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="max-w-32"/></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Diâmetro Menor</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="max-w-32"/></FormControl><FormMessage /></FormItem>)} />
                         </>
                     }
-                    <FormField control={form.control} name="pool.averageDepth" render={({ field }) => (<FormItem><FormLabel>Profundidade Média (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full sm:w-32"/></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="pool.averageDepth" render={({ field }) => (<FormItem><FormLabel>Profundidade Média</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="max-w-32"/></FormControl><FormMessage /></FormItem>)} />
 
                      {watchedPoolData.volumeMode === 'auto' && (
-                        <div className="hidden md:flex items-end">
-                            <Button type="button" onClick={handleCalculateVolume} className='w-full bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg hover:shadow-primary/50 hover:scale-105 active:scale-100 transition-all duration-300'>
+                        <div className="hidden lg:flex items-end">
+                            <Button type="button" onClick={handleCalculateVolume} className='bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg hover:shadow-primary/50 hover:scale-105 active:scale-100 transition-all duration-300'>
                                 <Calculator className="mr-2 h-4 w-4" /> Calcular
                             </Button>
                         </div>
                     )}
                 </div>
-                 {watchedPoolData.volumeMode === 'auto' && (
-                    <div className="flex md:hidden items-end">
-                        <Button type="button" onClick={handleCalculateVolume} className='w-full bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg hover:shadow-primary/50 hover:scale-105 active:scale-100 transition-all duration-300'>
-                            <Calculator className="mr-2 h-4 w-4" /> Calcular
-                        </Button>
-                    </div>
-                )}
 
-                <div className='flex items-end gap-2 pt-4'>
+                <div className='flex flex-col md:flex-row items-start md:items-end gap-4 pt-4'>
                     <FormField control={form.control} name="pool.volume" render={({ field }) => (
                         <FormItem className='flex-1 max-w-[150px]'>
                         <FormLabel>Litragem</FormLabel>
@@ -476,6 +469,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                     )} />
                     <FormField control={form.control} name="pool.volumeMode" render={({ field }) => (
                         <FormItem className='flex flex-col'>
+                            <FormLabel className='opacity-0 hidden md:block'>Modo</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl><SelectTrigger className='w-[120px]'><SelectValue /></SelectTrigger></FormControl>
                                 <SelectContent>
@@ -486,7 +480,15 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                             <FormDescription>Modo de cálculo</FormDescription>
                         </FormItem>
                     )} />
+                    {watchedPoolData.volumeMode === 'auto' && (
+                        <div className="flex lg:hidden items-end w-full">
+                            <Button type="button" onClick={handleCalculateVolume} className='w-full bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg hover:shadow-primary/50 hover:scale-105 active:scale-100 transition-all duration-300'>
+                                <Calculator className="mr-2 h-4 w-4" /> Calcular
+                            </Button>
+                        </div>
+                    )}
                 </div>
+                 <p className="text-xs text-muted-foreground pt-4">Obs: Para o cálculo correto da litragem, certifique-se de informar todas as medidas em metros.</p>
             </CardContent>
         </Card>
 
