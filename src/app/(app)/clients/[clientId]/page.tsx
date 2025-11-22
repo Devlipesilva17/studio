@@ -401,13 +401,13 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                             {(['quadrilateral', 'circular', 'oval'] as const).map(type => (
                                 <FormItem key={type} className="flex-1">
                                     <FormControl>
-                                        <RadioGroupItem value={type} className="sr-only" />
+                                        <RadioGroupItem value={type} id={type} className="sr-only" />
                                     </FormControl>
                                     <FormLabel
                                         htmlFor={type}
                                         className={cn(
-                                        'flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 cursor-pointer transition-all hover:shadow-md hover:-translate-y-1',
-                                        field.value === type ? 'border-primary shadow-md' : 'hover:border-accent'
+                                        'flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1',
+                                        field.value === type ? 'border-primary shadow-lg' : ''
                                         )}
                                     >
                                         <div className="mb-2 h-14 w-20 flex items-center justify-center">
@@ -426,8 +426,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                     )}
                 />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-6 items-end">
-                    {/* Inputs de dimensão */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6 items-end">
                     {watchedPoolData.type === 'quadrilateral' && 
                         <>
                             <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Comprimento (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full sm:w-32" /></FormControl><FormMessage /></FormItem>)} />
@@ -445,15 +444,21 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                     }
                     <FormField control={form.control} name="pool.averageDepth" render={({ field }) => (<FormItem><FormLabel>Profundidade Média (m)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="w-full sm:w-32"/></FormControl><FormMessage /></FormItem>)} />
 
-                     {/* Botão Calcular */}
-                    <div className="col-span-1 sm:col-span-2 md:col-span-1 flex items-end">
-                         {watchedPoolData.volumeMode === 'auto' && (
-                            <Button type="button" onClick={handleCalculateVolume} className='w-full md:w-auto'>
+                     {watchedPoolData.volumeMode === 'auto' && (
+                        <div className="hidden md:flex items-end">
+                            <Button type="button" onClick={handleCalculateVolume} className='w-full'>
                                 <Calculator className="mr-2 h-4 w-4" /> Calcular Volume
                             </Button>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
+                 {watchedPoolData.volumeMode === 'auto' && (
+                    <div className="flex md:hidden items-end">
+                        <Button type="button" onClick={handleCalculateVolume} className='w-full'>
+                            <Calculator className="mr-2 h-4 w-4" /> Calcular Volume
+                        </Button>
+                    </div>
+                )}
 
                 <div className='flex items-end gap-2 pt-4'>
                     <FormField control={form.control} name="pool.volume" render={({ field }) => (
@@ -462,7 +467,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                         <FormControl>
                             <div className='relative'>
                                 <Droplets className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                                <Input type="number" {...field} readOnly={watchedPoolData.volumeMode === 'auto'} className="font-bold bg-muted/50 pl-9" />
+                                <Input type="number" {...field} readOnly={watchedPoolData.volumeMode === 'auto'} className="font-bold bg-muted/50 pl-9 max-w-[150px]" />
                             </div>
                         </FormControl>
                         <FormDescription>Volume em litros (L)</FormDescription>
@@ -477,7 +482,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                                     <SelectItem value="manual">Manual</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <FormDescription>Modo</FormDescription>
+                            <FormDescription>Modo de cálculo</FormDescription>
                         </FormItem>
                     )} />
                 </div>
