@@ -406,7 +406,8 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                                     <FormLabel
                                         htmlFor={type}
                                         className={cn(
-                                        'flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1',
+                                        'flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1',
+                                        'hover:bg-transparent hover:shadow-primary/20',
                                         field.value === type ? 'border-primary shadow-lg' : ''
                                         )}
                                     >
@@ -446,16 +447,16 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
 
                      {watchedPoolData.volumeMode === 'auto' && (
                         <div className="hidden md:flex items-end">
-                            <Button type="button" onClick={handleCalculateVolume} className='w-full'>
-                                <Calculator className="mr-2 h-4 w-4" /> Calcular Volume
+                            <Button type="button" onClick={handleCalculateVolume} className='w-full bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg hover:shadow-primary/50 hover:scale-105 active:scale-100 transition-all duration-300'>
+                                <Calculator className="mr-2 h-4 w-4" /> Calcular
                             </Button>
                         </div>
                     )}
                 </div>
                  {watchedPoolData.volumeMode === 'auto' && (
                     <div className="flex md:hidden items-end">
-                        <Button type="button" onClick={handleCalculateVolume} className='w-full'>
-                            <Calculator className="mr-2 h-4 w-4" /> Calcular Volume
+                        <Button type="button" onClick={handleCalculateVolume} className='w-full bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg hover:shadow-primary/50 hover:scale-105 active:scale-100 transition-all duration-300'>
+                            <Calculator className="mr-2 h-4 w-4" /> Calcular
                         </Button>
                     </div>
                 )}
