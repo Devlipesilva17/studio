@@ -428,15 +428,15 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                     )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-end">
                     {watchedPoolData.type === 'quadrilateral' && 
                         <>
                             <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Comprimento</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Largura</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         </>
                     }
-                    {watchedPoolData.type === 'circular' &&
-                        <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem className="lg:col-span-2"><FormLabel>Diâmetro</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                     {watchedPoolData.type === 'circular' &&
+                        <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     }
                     {watchedPoolData.type === 'oval' && 
                         <>
