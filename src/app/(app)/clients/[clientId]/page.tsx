@@ -171,9 +171,9 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
 
   const watchedPoolData = form.watch('pool');
   
-  const handleCalculateVolume = () => {
+  const handleCalculateVolume = React.useCallback(() => {
     const { type, length = 0, width = 0, averageDepth = 0 } = form.getValues('pool');
-    
+
     if (watchedPoolData.volumeMode === 'manual') return;
 
     let volumeM3 = 0;
@@ -181,26 +181,26 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
 
     if (averageDepth > 0) {
         switch (type) {
-          case 'quadrilateral':
-            if (length > 0 && width > 0) {
-              volumeM3 = length * width * averageDepth;
-            }
-            break;
-          case 'circular':
-            if (length > 0) { // diameter
-              volumeM3 = length * length * averageDepth * OVAL_CIRCULAR_FACTOR;
-            }
-            break;
-          case 'oval':
-            if (length > 0 && width > 0) {
-              volumeM3 = length * width * averageDepth * OVAL_CIRCULAR_FACTOR;
-            }
-            break;
+            case 'quadrilateral':
+                if (length > 0 && width > 0) {
+                    volumeM3 = length * width * averageDepth;
+                }
+                break;
+            case 'circular':
+                if (length > 0) { // diameter
+                    volumeM3 = length * length * averageDepth * OVAL_CIRCULAR_FACTOR;
+                }
+                break;
+            case 'oval':
+                if (length > 0 && width > 0) {
+                    volumeM3 = length * width * averageDepth * OVAL_CIRCULAR_FACTOR;
+                }
+                break;
         }
     }
     const finalVolume = Math.round(volumeM3 * 1000);
-    form.setValue('pool.volume', finalVolume > 0 ? finalVolume : undefined);
-  };
+    form.setValue('pool.volume', finalVolume > 0 ? finalVolume : undefined, { shouldValidate: true });
+}, [form, watchedPoolData.volumeMode]);
 
 
   const onSubmit = async (data: z.infer<typeof fullClientProfileSchema>) => {
@@ -427,7 +427,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                     )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] lg:grid-cols-[1fr_1fr_1fr_auto] gap-x-4 gap-y-6 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] gap-x-4 gap-y-6 items-end">
                     {watchedPoolData.type === 'quadrilateral' && 
                         <>
                             <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Comprimento</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="max-w-32" /></FormControl><FormMessage /></FormItem>)} />
@@ -531,7 +531,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                 <FormItem><FormLabel>Tipo do Filtro</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="sand">Areia</SelectItem><SelectItem value="cartridge">Cartucho</SelectItem><SelectItem value="polyester">Poliéster</SelectItem></SelectContent></Select><FormMessage /></FormItem>
               )}/>
               {watchedPoolData.filterType === 'sand' && (
-                <>
+                <div className='contents md:grid md:grid-cols-2 md:col-span-2 md:gap-6'>
                   <FormField control={form.control} name="pool.lastFilterChange" render={({ field }) => (
                     <FormItem className="flex flex-col"><FormLabel>Última Troca</FormLabel><Popover><PopoverTrigger asChild>
                       <FormControl>
@@ -545,7 +545,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                   <FormField control={form.control} name="pool.filterCapacity" render={({ field }) => (
                     <FormItem><FormLabel>Capacidade do Filtro (kg)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                   )}/>
-                </>
+                </div>
               )}
             </div>
           </CardContent>
