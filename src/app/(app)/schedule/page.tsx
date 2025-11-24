@@ -8,9 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Calendar } from '@/components/ui/calendar';
 import type { Visit, Client, Pool } from '@/lib/types';
 import { useUser, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, where, getDocs, collectionGroup } from 'firebase/firestore';
 import { VisitEditDialog } from '@/components/schedule/visit-edit-dialog';
 import { addDays, startOfWeek } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SchedulePage() {
     const { user } = useUser();
@@ -20,39 +21,46 @@ export default function SchedulePage() {
     const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
     const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
     const [locale, setLocale] = React.useState('pt-BR');
+    const [visits, setVisits] = React.useState<Visit[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
 
     React.useEffect(() => {
         const userLocale = navigator.language || 'pt-BR';
         setLocale(userLocale);
     }, []);
 
-    const schedulesQuery = useMemoFirebase(() => {
-        if (!user || !firestore) return null;
-        // This query is simplistic. A real app would query across all clients.
-        // For this example, we assume we want all schedules for a user,
-        // which isn't directly supported by this structure without sub-collection queries.
-        // This is a placeholder for a more complex query logic.
-        return query(collection(firestore, `users/${user.uid}/clients/`));
-    }, [firestore, user]);
-    
-    // This is a placeholder. You'd fetch visits from all clients, not from a single root collection.
-    // const { data: visits, isLoading } = useCollection<Visit>(schedulesQuery);
-    const visits: Visit[] = []; // Using empty array until proper querying is built
-    const isLoading = false;
-
-
     const clientsQuery = useMemoFirebase(() => {
       if (!user || !firestore) return null;
       return query(collection(firestore, `users/${user.uid}/clients`));
     }, [firestore, user]);
     const { data: clientList } = useCollection<Client>(clientsQuery);
-    
-    // This would need to be a more complex query to get all pools for a user
-    const pools: Pool[] = []; 
 
+    React.useEffect(() => {
+      if (!user || !firestore) {
+        setIsLoading(false);
+        return;
+      };
+      
+      setIsLoading(true);
+      
+      const schedulesCollectionGroup = collectionGroup(firestore, 'schedules');
+      const userSchedulesQuery = query(schedulesCollectionGroup, where('__name__', '>=', `users/${user.uid}/`), where('__name__', '<', `users/${user.uid}/\uf8ff`));
+
+      const unsubscribe = onSnapshot(userSchedulesQuery, (snapshot) => {
+        const fetchedVisits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Visit));
+        setVisits(fetchedVisits);
+        setIsLoading(false);
+      }, (error) => {
+        console.error("Error fetching schedules:", error);
+        setIsLoading(false);
+      });
+
+      return () => unsubscribe();
+    }, [user, firestore]);
+    
 
     const daysWithVisits = React.useMemo(() => {
-        return (visits || []).map(visit => new Date(visit.scheduledDate));
+        return visits.map(visit => new Date(visit.scheduledDate));
     }, [visits]);
 
     const selectedDayVisits = React.useMemo(() => {
@@ -73,7 +81,7 @@ export default function SchedulePage() {
 
     const visitsByDay = React.useMemo(() => {
         return weekDays.map(day => 
-            (visits || []).filter(visit => {
+            visits.filter(visit => {
                 const visitDate = new Date(visit.scheduledDate);
                 return visitDate.getFullYear() === day.getFullYear() &&
                        visitDate.getMonth() === day.getMonth() &&
@@ -153,7 +161,15 @@ export default function SchedulePage() {
             </div>
             
             {isLoading ? (
-                 <div className="text-center">Carregando agendamentos...</div>
+                <div className="grid grid-cols-1 md:grid-cols-7 flex-1 gap-2 items-start">
+                    {Array.from({ length: 7 }).map((_, index) => (
+                        <div key={index} className="flex flex-col gap-2">
+                            <Skeleton className="h-20 w-full" />
+                            <Skeleton className="h-24 w-full" />
+                            <Skeleton className="h-24 w-full" />
+                        </div>
+                    ))}
+                </div>
             ) : viewMode === 'week' ? (
                 <div className="grid grid-cols-1 md:grid-cols-7 flex-1 gap-2 items-start">
                     {weekDays.map((day, index) => (
@@ -162,7 +178,7 @@ export default function SchedulePage() {
                                 <p className="font-semibold text-sm">{day.toLocaleDateString(locale, { weekday: 'short' })}</p>
                                 <p className="text-2xl font-bold font-headline">{day.getDate()}</p>
                             </div>
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-2 min-h-[100px]">
                                 {visitsByDay[index] && visitsByDay[index].length > 0 ? visitsByDay[index].map(visit => (
                                     <Card key={visit.id} className="w-full">
                                         <CardHeader className="p-4">
@@ -212,6 +228,7 @@ export default function SchedulePage() {
                            {selectedDayVisits.length > 0 ? selectedDayVisits.map(visit => (
                                 <div key={visit.id} className="w-full p-3 rounded-lg border bg-background/50">
                                     <p className="font-semibold">{visit.clientName}</p>
+
                                     <p className="text-sm text-muted-foreground">{visit.time}</p>
                                     <Badge variant={visit.status === 'completed' ? 'default' : 'secondary'} className='mt-2'>{getStatusText(visit.status)}</Badge>
                                 </div>
