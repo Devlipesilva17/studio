@@ -153,7 +153,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
       }
 
     }
-  }, [client, pools, form]);
+  }, [client, pools, form, activeTab]);
 
 
   const handleCalculateVolume = React.useCallback((poolIndex: number) => {
@@ -463,7 +463,6 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                 
                 {fields.map((field, index) => {
                     const watchedPoolData = form.watch(`pools.${index}`);
-                    const isNewPool = !watchedPoolData.id;
                     const tabValue = `pool-${index}`;
                     
                     return (
@@ -483,26 +482,24 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                                                     {isSavingPool === (watchedPoolData.id || 'new') ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                                     Salvar Piscina
                                                 </Button>
-                                                {!isNewPool && (
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild>
-                                                            <Button type="button" variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Excluir</Button>
-                                                        </AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader>
-                                                                <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                                                                <AlertDialogDescription>
-                                                                    Esta ação não pode ser desfeita. Isso excluirá permanentemente a piscina
-                                                                    "{watchedPoolData.name}" e todos os seus dados associados.
-                                                                </AlertDialogDescription>
-                                                            </AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                                <AlertDialogAction onClick={() => handleDeletePool(index, watchedPoolData.id)}>Excluir</AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
-                                                )}
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button type="button" variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Excluir</Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                Esta ação não pode ser desfeita. Isso excluirá permanentemente a piscina
+                                                                "{watchedPoolData.name}" e todos os seus dados associados.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDeletePool(index, watchedPoolData.id)}>Excluir</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
                                             </div>
                                         </div>
                                     </CardHeader>
