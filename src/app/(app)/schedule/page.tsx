@@ -32,6 +32,7 @@ import {
   useMemoFirebase,
   useCollection,
   useDoc,
+  useFirebase,
 } from '@/firebase';
 import {
   collection,
@@ -80,7 +81,7 @@ function QuickEditPopover({ visit }: { visit: Visit }) {
   const [isSaving, setIsSaving] = React.useState(false);
 
   const poolRef = useMemoFirebase(() => {
-    if (!user || !firestore || !visit) return null;
+    if (!user || !firestore || !visit || !visit.poolId) return null;
     return doc(firestore, `users/${user.uid}/clients/${visit.clientId}/pools`, visit.poolId);
   }, [user, firestore, visit]);
 
@@ -118,7 +119,6 @@ function QuickEditPopover({ visit }: { visit: Visit }) {
         hasStains,
         hasScale,
         waterQuality,
-        updatedAt: serverTimestamp(),
       };
       await updateDoc(poolRef, updatedData);
       toast({ title: "Dados da Piscina Atualizados!" });
@@ -255,7 +255,7 @@ export default function SchedulePage() {
         schedulesCollectionRef,
         (snapshot) => {
           const fetchedVisits = snapshot.docs.map(
-            (doc) => ({ ...doc.data(), id: doc.id, clientName: client.name } as Visit)
+            (doc) => ({ ...doc.data(), id: doc.id, clientName: client.name, clientId: client.id } as Visit)
           );
 
           setVisits((prevVisits) => {
@@ -547,7 +547,7 @@ export default function SchedulePage() {
                 <div className="flex flex-col gap-2 min-h-[100px] flex-1">
                   {visitsByDay[index] && visitsByDay[index].length > 0 ? (
                     visitsByDay[index].map((visit) => (
-                      <Card key={visit.id} className="w-full flex flex-col flex-1">
+                      <Card key={visit.id} className="w-full flex flex-col flex-grow">
                         <CardHeader className="p-3">
                           <CardTitle className="text-base">
                             {visit.clientName}
