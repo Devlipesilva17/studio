@@ -188,7 +188,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                 }
                 break;
             case 'circular':
-                if (length > 0) { // diameter
+                 if (length > 0) { // diameter
                     volumeM3 = length * length * averageDepth * CIRCULAR_FACTOR;
                 }
                 break;
@@ -200,8 +200,10 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
         }
     }
     
-    const finalVolume = Math.round(volumeM3 * 1000);
-    form.setValue('pool.volume', finalVolume > 0 ? finalVolume : undefined, { shouldValidate: true });
+    const finalVolumeLiters = volumeM3 * 1000;
+    const roundedVolume = Math.round(finalVolumeLiters / 10) * 10;
+    
+    form.setValue('pool.volume', roundedVolume > 0 ? roundedVolume : undefined, { shouldValidate: true });
   }, [form, watchedPoolData.volumeMode]);
 
 
@@ -429,22 +431,22 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                     )}
                 />
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                     {watchedPoolData.type === 'quadrilateral' && 
+                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
+                    {watchedPoolData.type === 'quadrilateral' && (
                         <>
                             <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Comprimento</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Largura</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         </>
-                    }
+                    )}
                      {watchedPoolData.type === 'circular' &&
-                        <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Diâmetro</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem className="lg:col-span-2"><FormLabel>Diâmetro</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     }
-                    {watchedPoolData.type === 'oval' && 
+                    {watchedPoolData.type === 'oval' && (
                         <>
                             <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Comprimento</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Largura</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         </>
-                    }
+                    )}
                     <FormField control={form.control} name="pool.averageDepth" render={({ field }) => (<FormItem><FormLabel>Profundidade Média</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     {watchedPoolData.volumeMode === 'auto' && (
                         <div className="flex items-end">
@@ -455,7 +457,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                     )}
                 </div>
 
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
                     <FormField control={form.control} name="pool.volume" render={({ field }) => (
                         <FormItem>
                         <FormLabel>Litragem</FormLabel>
