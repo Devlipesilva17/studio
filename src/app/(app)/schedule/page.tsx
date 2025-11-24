@@ -115,7 +115,7 @@ export default function SchedulePage() {
         schedulesCollectionRef,
         (snapshot) => {
           const fetchedVisits = snapshot.docs.map(
-            (doc) => ({ ...doc.data(), id: doc.id } as Visit)
+            (doc) => ({ ...doc.data(), id: doc.id, clientName: client.name } as Visit)
           );
 
           setVisits((prevVisits) => {
@@ -406,17 +406,17 @@ export default function SchedulePage() {
                     {day.getDate()}
                   </p>
                 </div>
-                <div className="flex flex-col gap-2 min-h-[100px]">
+                <div className="flex flex-col gap-2 min-h-[100px] flex-1">
                   {visitsByDay[index] && visitsByDay[index].length > 0 ? (
                     visitsByDay[index].map((visit) => (
-                      <Card key={visit.id} className="w-full flex flex-col">
+                      <Card key={visit.id} className="w-full flex flex-col flex-1">
                         <CardHeader className="p-3">
                           <CardTitle className="text-base">
                             {visit.clientName}
                           </CardTitle>
                           <CardDescription>{visit.time}</CardDescription>
                         </CardHeader>
-                        <CardContent className="p-3 pt-0">
+                        <CardContent className="p-3 pt-0 flex-grow">
                           <Badge
                             variant={
                               visit.status === 'completed'
