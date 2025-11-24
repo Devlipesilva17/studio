@@ -199,9 +199,10 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                 break;
         }
     }
+    
     const finalVolume = Math.round(volumeM3 * 1000);
     form.setValue('pool.volume', finalVolume > 0 ? finalVolume : undefined, { shouldValidate: true });
-}, [form, watchedPoolData.volumeMode]);
+  }, [form, watchedPoolData.volumeMode]);
 
 
   const onSubmit = async (data: z.infer<typeof fullClientProfileSchema>) => {
@@ -387,7 +388,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
         <Card>
             <CardHeader><CardTitle className="text-center">Metragens e Dimensões</CardTitle></CardHeader>
             <CardContent className="space-y-6">
-                <FormField
+                 <FormField
                     control={form.control}
                     name="pool.type"
                     render={({ field }) => (
@@ -427,9 +428,9 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                         </FormItem>
                     )}
                 />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-end">
-                    {watchedPoolData.type === 'quadrilateral' && 
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                     {watchedPoolData.type === 'quadrilateral' && 
                         <>
                             <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Comprimento</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Largura</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -445,7 +446,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                         </>
                     }
                     <FormField control={form.control} name="pool.averageDepth" render={({ field }) => (<FormItem><FormLabel>Profundidade Média</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                     {watchedPoolData.volumeMode === 'auto' && (
+                    {watchedPoolData.volumeMode === 'auto' && (
                         <div className="flex items-end">
                             <Button type="button" onClick={handleCalculateVolume} className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg hover:shadow-primary/50 hover:scale-105 active:scale-100 transition-all duration-300">
                                 <Calculator className="mr-2 h-4 w-4" /> Calcular
@@ -453,7 +454,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                         </div>
                     )}
                 </div>
-                 
+
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                     <FormField control={form.control} name="pool.volume" render={({ field }) => (
                         <FormItem>
@@ -519,29 +520,27 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                 <FormField control={form.control} name="pool.hasScale" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Incrustações?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
             </div>
             <div className="h-px bg-border my-2" />
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField control={form.control} name="pool.filterType" render={({ field }) => (
                     <FormItem><FormLabel>Tipo do Filtro</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="sand">Areia</SelectItem><SelectItem value="cartridge">Cartucho</SelectItem><SelectItem value="polyester">Poliéster</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                 )}/>
-                <div className="md:col-span-2">
-                    {watchedPoolData.filterType === 'sand' && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                             <FormField control={form.control} name="pool.lastFilterChange" render={({ field }) => (
-                                <FormItem className="flex flex-col"><FormLabel>Última Troca</FormLabel><Popover><PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button variant={'outline'} className={cn('pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}>
-                                    {field.value ? format(field.value, 'PPP', { locale: ptBR }) : <span>Escolha uma data</span>}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>
-                            )}/>
-                            <FormField control={form.control} name="pool.filterCapacity" render={({ field }) => (
-                                <FormItem><FormLabel>Capacidade do Filtro (kg)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                            )}/>
-                        </div>
-                    )}
-                </div>
+                {watchedPoolData.filterType === 'sand' && (
+                    <>
+                        <FormField control={form.control} name="pool.lastFilterChange" render={({ field }) => (
+                            <FormItem className="flex flex-col"><FormLabel>Última Troca</FormLabel><Popover><PopoverTrigger asChild>
+                            <FormControl>
+                                <Button variant={'outline'} className={cn('pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}>
+                                {field.value ? format(field.value, 'PPP', { locale: ptBR }) : <span>Escolha uma data</span>}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>
+                        )}/>
+                        <FormField control={form.control} name="pool.filterCapacity" render={({ field }) => (
+                            <FormItem><FormLabel>Capacidade do Filtro (kg)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                    </>
+                )}
             </div>
           </CardContent>
         </Card>
