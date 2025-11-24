@@ -36,11 +36,44 @@ export default function LoginPage() {
   const [password, setPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [suggestions, setSuggestions] = React.useState<string[]>([]);
+  
+  const emailProviders = [
+    'gmail.com',
+    'outlook.com',
+    'outlook.com.br',
+    'yahoo.com',
+    'hotmail.com',
+    'icloud.com',
+  ];
 
   const auth = useAuth();
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+
+    if (value.includes('@')) {
+      const [localPart, domainPart] = value.split('@');
+      if (domainPart === '') {
+        setSuggestions(emailProviders.map(provider => `${localPart}@${provider}`));
+      } else {
+        const filteredProviders = emailProviders.filter(p => p.startsWith(domainPart));
+        setSuggestions(filteredProviders.map(provider => `${localPart}@${provider}`));
+      }
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setEmail(suggestion);
+    setSuggestions([]);
+  };
+
 
   const handleAuthAction = async () => {
     if (!auth) {
@@ -144,7 +177,7 @@ export default function LoginPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
-              <div className="grid gap-2">
+              <div className="grid gap-2 relative">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -152,9 +185,25 @@ export default function LoginPage() {
                   placeholder="m@exemplo.com"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={handleEmailChange}
                   disabled={isLoading}
+                  autoComplete="off"
                 />
+                 {suggestions.length > 0 && (
+                  <div className="absolute top-full mt-2 w-full bg-card border rounded-md shadow-lg z-10">
+                    <ul className="py-1">
+                      {suggestions.map((suggestion) => (
+                        <li
+                          key={suggestion}
+                          className="px-3 py-2 cursor-pointer hover:bg-secondary"
+                          onClick={() => handleSuggestionClick(suggestion)}
+                        >
+                          {suggestion}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
               <div className="grid gap-2 relative">
                 <div className="flex items-center">
