@@ -35,6 +35,18 @@
         "notificationPrefs": {
           "type": "string",
           "description": "Stringified JSON object that represents notification preferences, such as whether to sync scheduled visits or completed services to Google Calendar, and which clients and neighborhoods to include."
+        },
+        "googleAccessToken": {
+            "type": "string",
+            "description": "The access token for Google API."
+        },
+        "googleRefreshToken": {
+            "type": "string",
+            "description": "The refresh token for Google API."
+        },
+        "googleTokenExpiry": {
+            "type": "number",
+            "description": "The expiry date (in ms) of the Google access token."
         }
       },
       "required": [

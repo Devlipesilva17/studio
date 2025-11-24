@@ -8,8 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from '@/components/ui/separator';
+import { GoogleIcon } from '@/components/icons';
 
 export default function SettingsPage() {
+    const [isGoogleConnected, setIsGoogleConnected] = React.useState(false);
+    
     return (
         <div className="flex flex-col gap-6">
             <div className="flex items-center">
@@ -89,23 +92,39 @@ export default function SettingsPage() {
                         <Separator />
 
                         <div className="space-y-4">
-                             <h3 className="font-medium">Sincronização com Google Agenda</h3>
-                             <div className="flex items-center justify-between rounded-lg border p-4">
-                                <div className="space-y-0.5">
-                                    <Label htmlFor="google-calendar-sync" className="text-base">Ativar Sincronização</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Sincronize automaticamente seus agendamentos com o Google Agenda.
-                                    </p>
+                            <h3 className="font-medium">Sincronização com Google Agenda</h3>
+                            {isGoogleConnected ? (
+                                <>
+                                    <div className="flex items-center justify-between rounded-lg border p-4 bg-secondary/30">
+                                        <div className="space-y-0.5">
+                                            <Label htmlFor="google-calendar-sync" className="text-base">Sincronização Ativa</Label>
+                                            <p className="text-sm text-muted-foreground">
+                                                Seus agendamentos estão sendo sincronizados com o Google Agenda.
+                                            </p>
+                                        </div>
+                                        <Button variant="destructive" onClick={() => setIsGoogleConnected(false)}>Desconectar</Button>
+                                    </div>
+                                    <div className="space-y-2 pl-4 border-l-2 ml-4">
+                                        <p className="text-sm font-medium">Filtrar sincronização por:</p>
+                                        <div className="text-sm text-muted-foreground p-4 bg-muted rounded-md">
+                                            As opções de filtro por bairro e cliente aparecerão aqui.
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center rounded-lg border p-6 gap-4 text-center">
+                                    <div className="space-y-0.5">
+                                        <p className="text-base font-semibold">Conecte sua conta do Google</p>
+                                        <p className="text-sm text-muted-foreground max-w-sm">
+                                            Sincronize automaticamente seus agendamentos com o Google Agenda para nunca mais perder uma visita.
+                                        </p>
+                                    </div>
+                                    <Button variant="outline">
+                                        <GoogleIcon className="mr-2 h-4 w-4" />
+                                        Conectar com Google
+                                    </Button>
                                 </div>
-                                <Switch id="google-calendar-sync" />
-                            </div>
-                            <div className="space-y-2 pl-4 border-l-2 ml-4">
-                                <p className="text-sm font-medium">Filtrar sincronização por:</p>
-                                {/* Aqui entrariam os seletores para bairros e clientes */}
-                                 <div className="text-sm text-muted-foreground p-4 bg-muted rounded-md">
-                                     As opções de filtro por bairro e cliente aparecerão aqui após a conexão com o Google Agenda.
-                                 </div>
-                            </div>
+                            )}
                         </div>
 
                          <Button>Salvar Preferências</Button>
