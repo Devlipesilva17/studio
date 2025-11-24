@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from '@/components/ui/separator';
-import { GoogleIcon } from '@/components/icons';
+import { GoogleCalendarIcon } from '@/components/icons';
 import { useAuth, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import type { User as UserProfile } from '@/lib/types';
@@ -106,6 +106,18 @@ export default function SettingsPage() {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleGoogleConnect = () => {
+        const width = 600;
+        const height = 700;
+        const left = window.screen.width / 2 - width / 2;
+        const top = window.screen.height / 2 - height / 2;
+        window.open(
+            '/api/auth/google',
+            'google-auth',
+            `width=${width},height=${height},left=${left},top=${top}`
+        );
     };
 
     const isGoogleConnected = userProfile?.googleRefreshToken;
@@ -244,11 +256,9 @@ export default function SettingsPage() {
                                                     Sincronize automaticamente seus agendamentos com o Google Agenda para nunca mais perder uma visita.
                                                 </p>
                                             </div>
-                                            <Button variant="outline" asChild type="button">
-                                                <Link href="/api/auth/google">
-                                                    <GoogleIcon className="mr-2 h-4 w-4" />
-                                                    Conectar com Google
-                                                </Link>
+                                            <Button variant="outline" onClick={handleGoogleConnect} type="button">
+                                                <GoogleCalendarIcon className="mr-2 h-4 w-4" />
+                                                Conectar com Google Agenda
                                             </Button>
                                         </div>
                                     )}
