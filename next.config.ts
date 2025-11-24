@@ -30,6 +30,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    // Adiciona 'googleapis' à lista de externos para o build do cliente
+    if (!isServer) {
+      config.externals = [...config.externals, 'googleapis'];
+    }
+    return config;
+  },
 };
 
 export default nextConfig;
