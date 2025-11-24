@@ -1,4 +1,4 @@
-import { getOAuth2Client } from '@/firebase';
+import { getOAuth2Client } from '@/firebase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
