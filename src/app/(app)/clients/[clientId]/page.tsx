@@ -146,6 +146,12 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
            volume: p.volume ? Math.round(p.volume / 10) * 10 : undefined,
         })) || []
       });
+       if (pools && pools.length > 0 && activeTab === 'pool-0') {
+         // do nothing, default is fine
+      } else if (pools && pools.length === 0) {
+        setActiveTab('new');
+      }
+
     }
   }, [client, pools, form]);
 
@@ -257,8 +263,9 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
   };
 
   const handleAddNewPool = () => {
+    const newIndex = fields.length;
     append({
-        name: `Piscina ${fields.length + 1}`,
+        name: `Piscina ${newIndex + 1}`,
         type: 'quadrilateral',
         volumeMode: 'auto',
         ph: 7.2,
@@ -272,7 +279,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
         filterType: 'sand',
     });
     // Switch to the new tab
-    setTimeout(() => setActiveTab(`new-pool-${fields.length}`), 0);
+    setTimeout(() => setActiveTab(`pool-${newIndex}`), 0);
   };
   
   const handleDeletePool = async (poolIndex: number, poolId?: string) => {
@@ -281,13 +288,13 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
         try {
             await deleteDoc(poolRef);
             toast({ title: "Piscina Removida", description: "A piscina foi removida com sucesso." });
-            // The real-time listener will update the state
         } catch (error) {
             toast({ variant: 'destructive', title: "Erro", description: "Não foi possível remover a piscina." });
         }
     }
     remove(poolIndex);
-    setActiveTab('pool-0');
+    const newActiveIndex = Math.max(0, poolIndex - 1);
+    setActiveTab(fields.length > 1 ? `pool-${newActiveIndex}` : 'pool-0');
   };
 
   const isLoading = isClientLoading || arePoolsLoading;
@@ -457,7 +464,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                 {fields.map((field, index) => {
                     const watchedPoolData = form.watch(`pools.${index}`);
                     const isNewPool = !watchedPoolData.id;
-                    const tabValue = isNewPool ? `new-pool-${index}` : `pool-${index}`;
+                    const tabValue = `pool-${index}`;
                     
                     return (
                         <TabsContent key={field.id} value={tabValue}>
