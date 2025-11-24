@@ -410,7 +410,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                                     <FormLabel
                                         htmlFor={type}
                                         className={cn(
-                                        'flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 cursor-pointer transition-all',
+                                        'flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 cursor-pointer transition-all duration-300',
                                         'hover:shadow-lg hover:-translate-y-1',
                                         field.value === type ? 'border-primary shadow-lg' : ''
                                         )}
@@ -438,7 +438,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                             <FormField control={form.control} name="pool.width" render={({ field }) => (<FormItem><FormLabel>Largura</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         </>
                     )}
-                     {watchedPoolData.type === 'circular' &&
+                    {watchedPoolData.type === 'circular' &&
                         <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem className="lg:col-span-2"><FormLabel>Diâmetro</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     }
                     {watchedPoolData.type === 'oval' && (
@@ -464,7 +464,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                         <FormControl>
                             <div className='relative'>
                                 <Droplets className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                                <Input type="number" {...field} readOnly={watchedPoolData.volumeMode === 'auto'} className="font-bold bg-muted/50 pl-9" />
+                                <Input type="text" value={field.value ? new Intl.NumberFormat('pt-BR').format(field.value) : ''} readOnly={watchedPoolData.volumeMode === 'auto'} onChange={(e) => { const val = parseInt(e.target.value.replace(/\D/g, '')); field.onChange(isNaN(val) ? undefined : val); }} className={cn("font-bold bg-muted/50 pl-9", {'max-w-40': watchedPoolData.volumeMode === 'auto'})} />
                             </div>
                         </FormControl>
                         <FormDescription>Volume em litros (L)</FormDescription>
