@@ -66,7 +66,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -74,7 +82,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 
 
-function QuickEditPopover({ visit }: { visit: Visit }) {
+function QuickEditDialog({ visit }: { visit: Visit }) {
   const { user, firestore } = useFirebase();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = React.useState(false);
@@ -96,7 +104,7 @@ function QuickEditPopover({ visit }: { visit: Visit }) {
   const [waterQuality, setWaterQuality] = React.useState<'green' | 'cloudy' | 'crystal-clear'>('crystal-clear');
 
   React.useEffect(() => {
-    if (poolData) {
+    if (poolData && isOpen) {
       setPh(poolData.ph);
       setChlorine(poolData.chlorine);
       setAlkalinity(poolData.alkalinity);
@@ -105,7 +113,7 @@ function QuickEditPopover({ visit }: { visit: Visit }) {
       setHasScale(poolData.hasScale || false);
       setWaterQuality(poolData.waterQuality || 'crystal-clear');
     }
-  }, [poolData]);
+  }, [poolData, isOpen]);
 
   const handleSave = async () => {
     if (!poolRef) return;
@@ -131,73 +139,73 @@ function QuickEditPopover({ visit }: { visit: Visit }) {
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
         <Button variant="ghost" size="icon" className="h-7 w-7">
           <Clipboard className="h-4 w-4" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80">
-        <div className="grid gap-4">
-          <div className="space-y-2">
-            <h4 className="font-medium leading-none">Atualização Rápida</h4>
-            <p className="text-sm text-muted-foreground">
-              Altere os parâmetros atuais da piscina.
-            </p>
-          </div>
-          {isPoolLoading ? (
-            <Skeleton className="h-48 w-full" />
-          ) : (
-            <div className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="ph">pH</Label>
-                  <Input id="ph" type="number" step="0.1" value={ph ?? ''} onChange={e => setPh(e.target.valueAsNumber)} className="col-span-2 h-8" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="chlorine">Cloro</Label>
-                  <Input id="chlorine" type="number" step="0.1" value={chlorine ?? ''} onChange={e => setChlorine(e.target.valueAsNumber)} className="col-span-2 h-8" />
-                </div>
-                 <div className="grid gap-2">
-                  <Label htmlFor="alkalinity">Alcalinidade</Label>
-                  <Input id="alkalinity" type="number" value={alkalinity ?? ''} onChange={e => setAlkalinity(e.target.valueAsNumber)} className="col-span-2 h-8" />
-                </div>
-                 <div className="grid gap-2">
-                  <Label htmlFor="hardness">Dureza</Label>
-                  <Input id="hardness" type="number" value={calciumHardness ?? ''} onChange={e => setCalciumHardness(e.target.valueAsNumber)} className="col-span-2 h-8" />
-                </div>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Atualização Rápida</DialogTitle>
+          <DialogDescription>
+            Altere os parâmetros atuais da piscina.
+          </DialogDescription>
+        </DialogHeader>
+        {isPoolLoading ? (
+          <Skeleton className="h-48 w-full" />
+        ) : (
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="ph">pH</Label>
+                <Input id="ph" type="number" step="0.1" value={ph ?? ''} onChange={e => setPh(e.target.valueAsNumber)} className="col-span-2 h-8" />
               </div>
               <div className="grid gap-2">
-                  <Label>Qualidade da Água</Label>
-                   <Select onValueChange={(v: any) => setWaterQuality(v)} value={waterQuality}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="crystal-clear">Cristalina</SelectItem>
-                        <SelectItem value="cloudy">Turva</SelectItem>
-                        <SelectItem value="green">Verde</SelectItem>
-                      </SelectContent>
-                    </Select>
+                <Label htmlFor="chlorine">Cloro</Label>
+                <Input id="chlorine" type="number" step="0.1" value={chlorine ?? ''} onChange={e => setChlorine(e.target.valueAsNumber)} className="col-span-2 h-8" />
               </div>
-
-               <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch id="stains" checked={hasStains} onCheckedChange={setHasStains} />
-                    <Label htmlFor="stains">Manchas</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch id="scale" checked={hasScale} onCheckedChange={setHasScale} />
-                    <Label htmlFor="scale">Incrustações</Label>
-                  </div>
+              <div className="grid gap-2">
+                <Label htmlFor="alkalinity">Alcalinidade</Label>
+                <Input id="alkalinity" type="number" value={alkalinity ?? ''} onChange={e => setAlkalinity(e.target.valueAsNumber)} className="col-span-2 h-8" />
               </div>
-              <Button onClick={handleSave} disabled={isSaving}>
-                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Salvar
-              </Button>
+              <div className="grid gap-2">
+                <Label htmlFor="hardness">Dureza</Label>
+                <Input id="hardness" type="number" value={calciumHardness ?? ''} onChange={e => setCalciumHardness(e.target.valueAsNumber)} className="col-span-2 h-8" />
+              </div>
             </div>
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
+            <div className="grid gap-2">
+                <Label>Qualidade da Água</Label>
+                  <Select onValueChange={(v: any) => setWaterQuality(v)} value={waterQuality}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="crystal-clear">Cristalina</SelectItem>
+                      <SelectItem value="cloudy">Turva</SelectItem>
+                      <SelectItem value="green">Verde</SelectItem>
+                    </SelectContent>
+                  </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Switch id="stains" checked={hasStains} onCheckedChange={setHasStains} />
+                  <Label htmlFor="stains">Manchas</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch id="scale" checked={hasScale} onCheckedChange={setHasScale} />
+                  <Label htmlFor="scale">Incrustações</Label>
+                </div>
+            </div>
+          </div>
+        )}
+        <DialogFooter>
+          <Button onClick={() => setIsOpen(false)} variant="outline">Cancelar</Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Salvar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -410,7 +418,7 @@ export default function SchedulePage() {
 
   const renderVisitActions = (visit: Visit) => (
     <div className="flex justify-end items-center gap-1">
-      <QuickEditPopover visit={visit} />
+      <QuickEditDialog visit={visit} />
       
       {visit.status === 'pending' && (
         <Button
