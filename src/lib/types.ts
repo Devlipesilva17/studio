@@ -7,7 +7,7 @@ export type Client = {
   phone?: string;
   address?: string;
   neighborhood: string;
-  createdAt: string; // ISO 8601 date string
+  createdAt?: string; // ISO 8601 date string
   avatarUrl?: string;
   notes?: string;
   startDate?: string;
@@ -22,6 +22,7 @@ export type Pool = {
   length?: number;
   width?: number; // doubles as diameter for circular
   averageDepth?: number;
+  volume?: number;
   ph?: number;
   chlorine?: number;
   alkalinity?: number;
@@ -50,6 +51,7 @@ export type Product = {
 export type Visit = {
   id: string;
   poolId: string;
+  clientId: string;
   clientName: string;
   scheduledDate: string; // ISO 8601 date string
   completedDate?: string; // ISO 8601 date string

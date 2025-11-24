@@ -3,43 +3,64 @@
 import * as React from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DUMMY_VISITS } from "@/lib/placeholder-data";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from '@/components/ui/calendar';
-import type { Visit } from '@/lib/types';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-
+import type { Visit, Client, Pool } from '@/lib/types';
+import { useUser, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
+import { VisitEditDialog } from '@/components/schedule/visit-edit-dialog';
 
 export default function SchedulePage() {
+    const { user } = useUser();
+    const firestore = useFirestore();
     const [viewMode, setViewMode] = React.useState<'week' | 'month'>('week');
     const [currentDate, setCurrentDate] = React.useState(new Date());
     const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
+    const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
     const [visitsByDay, setVisitsByDay] = React.useState<Visit[][]>([]);
     const [weekDays, setWeekDays] = React.useState<Date[]>([]);
     const [weekRange, setWeekRange] = React.useState('');
     const [locale, setLocale] = React.useState('pt-BR');
 
+    const schedulesQuery = useMemoFirebase(() => {
+        if (!user || !firestore) return null;
+        // This query is simplistic. A real app would query across all clients.
+        // For this example, we assume we want all schedules for a user,
+        // which isn't directly supported by this structure without sub-collection queries.
+        // This is a placeholder for a more complex query logic.
+        return query(collection(firestore, `users/${user.uid}/clients/`));
+    }, [firestore, user]);
+    
+    // This is a placeholder. You'd fetch visits from all clients, not from a single root collection.
+    // const { data: visits, isLoading } = useCollection<Visit>(schedulesQuery);
+    const visits: Visit[] = []; // Using empty array until proper querying is built
+    const isLoading = false;
+
+
+    const clientsQuery = useMemoFirebase(() => {
+      if (!user || !firestore) return null;
+      return query(collection(firestore, `users/${user.uid}/clients`));
+    }, [firestore, user]);
+    const { data: clientList } = useCollection<Client>(clientsQuery);
+    
+    // This would need to be a more complex query to get all pools for a user
+    const pools: Pool[] = []; 
+
+
     const daysWithVisits = React.useMemo(() => {
-        return DUMMY_VISITS.map(visit => new Date(visit.scheduledDate));
-    }, []);
+        return (visits || []).map(visit => new Date(visit.scheduledDate));
+    }, [visits]);
 
     const selectedDayVisits = React.useMemo(() => {
-        if (!selectedDate) return [];
-        return DUMMY_VISITS.filter(visit => {
+        if (!selectedDate || !visits) return [];
+        return visits.filter(visit => {
             const visitDate = new Date(visit.scheduledDate);
             return visitDate.getFullYear() === selectedDate.getFullYear() &&
                    visitDate.getMonth() === selectedDate.getMonth() &&
                    visitDate.getDate() === selectedDate.getDate();
         }).sort((a,b) => a.time.localeCompare(b.time));
-    }, [selectedDate]);
+    }, [selectedDate, visits]);
 
 
     React.useEffect(() => {
@@ -60,7 +81,7 @@ export default function SchedulePage() {
         setWeekDays(days);
         
         const dailyVisits = days.map(day => 
-            DUMMY_VISITS.filter(visit => {
+            (visits || []).filter(visit => {
                 const visitDate = new Date(visit.scheduledDate);
                 return visitDate.getFullYear() === day.getFullYear() &&
                        visitDate.getMonth() === day.getMonth() &&
@@ -73,7 +94,7 @@ export default function SchedulePage() {
         const end = days[6].toLocaleDateString(userLocale, { month: 'long', day: 'numeric', year: 'numeric'});
         setWeekRange(`${start} - ${end}`);
 
-    }, [currentDate]);
+    }, [currentDate, visits]);
 
     const handlePrevWeek = () => {
         setCurrentDate(prev => {
@@ -94,6 +115,10 @@ export default function SchedulePage() {
     const handleDateSelect = (date: Date | undefined) => {
         setSelectedDate(date);
     }
+    
+    const handleAddNewVisit = () => {
+        setIsEditDialogOpen(true);
+    }
 
     const getStatusText = (status: 'pending' | 'completed' | 'skipped') => {
         switch (status) {
@@ -106,6 +131,7 @@ export default function SchedulePage() {
 
 
     return (
+        <>
         <div className="flex flex-col h-full">
             <div className="flex items-center justify-between pb-4">
                 <div className="flex items-center gap-4">
@@ -131,7 +157,7 @@ export default function SchedulePage() {
                             {viewMode === 'week' ? 'Visão Mensal' : 'Visão Semanal'}
                         </span>
                     </Button>
-                    <Button size="sm" className="h-8 gap-1">
+                    <Button size="sm" className="h-8 gap-1" onClick={handleAddNewVisit}>
                         <PlusCircle className="h-3.5 w-3.5" />
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                             Nova Visita
@@ -140,7 +166,9 @@ export default function SchedulePage() {
                 </div>
             </div>
             
-            {viewMode === 'week' ? (
+            {isLoading ? (
+                 <div className="text-center">Carregando agendamentos...</div>
+            ) : viewMode === 'week' ? (
                 <div className="grid grid-cols-1 md:grid-cols-7 flex-1 gap-2 items-start">
                     {weekDays.map((day, index) => (
                         <div key={day.toISOString()} className="flex flex-col gap-2">
@@ -211,5 +239,11 @@ export default function SchedulePage() {
                 </div>
             )}
         </div>
+        <VisitEditDialog
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            clients={clientList || []}
+        />
+        </>
     );
 }
