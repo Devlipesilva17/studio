@@ -15,6 +15,7 @@ import {
   PanelLeft,
   Search,
   Settings,
+  LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,12 +35,24 @@ import {
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { PoolIcon } from '@/components/icons';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const pathname = usePathname();
+  const auth = useAuth();
+  const router = useRouter();
+
+
+  const handleLogout = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/');
+    }
+  };
 
   const navItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -111,32 +124,35 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
               <nav className="grid gap-2 text-lg font-medium">
-                <Link
-                  href="/dashboard"
-                  onClick={() => setIsSheetOpen(false)}
-                  className="flex items-center gap-2 text-lg font-semibold mb-4"
-                >
-                  <PoolIcon className="h-6 w-6 text-primary" />
-                  <span>PoolCare Pro</span>
-                </Link>
-                {navItems.map((item) => (
+                <SheetClose asChild>
                   <Link
-                      key={item.label}
-                      href={item.href}
-                      onClick={() => setIsSheetOpen(false)}
-                      className={cn(
-                        "mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground",
-                         pathname === item.href && "bg-muted text-foreground"
-                      )}
-                    >
-                      <item.icon className="h-5 w-5" />
-                      {item.label}
-                      {item.badge && (
-                        <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
-                          {item.badge}
-                        </Badge>
-                      )}
-                    </Link>
+                    href="/dashboard"
+                    onClick={() => setIsSheetOpen(false)}
+                    className="flex items-center gap-2 text-lg font-semibold mb-4"
+                  >
+                    <PoolIcon className="h-6 w-6 text-primary" />
+                    <span>PoolCare Pro</span>
+                  </Link>
+                </SheetClose>
+                {navItems.map((item) => (
+                  <SheetClose key={item.label} asChild>
+                    <Link
+                        href={item.href}
+                        onClick={() => setIsSheetOpen(false)}
+                        className={cn(
+                          "mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground",
+                          pathname === item.href && "bg-muted text-foreground"
+                        )}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        {item.label}
+                        {item.badge && (
+                          <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
+                            {item.badge}
+                          </Badge>
+                        )}
+                      </Link>
+                    </SheetClose>
                 ))}
               </nav>
             </SheetContent>
@@ -174,8 +190,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </DropdownMenuItem>
               <DropdownMenuItem>Suporte</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/">Sair</Link>
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sair</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
