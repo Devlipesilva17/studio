@@ -25,6 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
@@ -107,19 +108,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <span className="sr-only">PoolCare Pro</span>
                 </Link>
                 {navItems.map((item) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                    {item.badge && (
-                      <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
-                        {item.badge}
-                      </Badge>
-                    )}
-                  </Link>
+                  <SheetClose asChild key={item.label}>
+                    <Link
+                      href={item.href}
+                      className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {item.label}
+                      {item.badge && (
+                        <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </Link>
+                  </SheetClose>
                 ))}
               </nav>
             </SheetContent>
