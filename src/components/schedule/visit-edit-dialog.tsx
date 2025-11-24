@@ -35,6 +35,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar } from '../ui/calendar';
 import { Textarea } from '../ui/textarea';
+import { Input } from '../ui/input';
 
 
 const formSchema = z.object({
@@ -181,17 +182,6 @@ export function VisitEditDialog({
     }
   };
 
-  const timeSlots = React.useMemo(() => {
-    const slots = [];
-    for (let i = 7; i <= 19; i++) {
-        slots.push(`${String(i).padStart(2, '0')}:00`);
-        if (i < 19) {
-            slots.push(`${String(i).padStart(2, '0')}:30`);
-        }
-    }
-    return slots;
-  }, []);
-
   const groupedClients = React.useMemo(() => {
     if (!clients) return {};
     return clients
@@ -302,12 +292,12 @@ export function VisitEditDialog({
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                     <FormField
                     control={form.control}
                     name="scheduledDate"
                     render={({ field }) => (
-                        <FormItem className="flex flex-col">
+                        <FormItem className="flex-1 flex flex-col">
                         <FormLabel>Data da Visita</FormLabel>
                         <Popover>
                             <PopoverTrigger asChild>
@@ -346,21 +336,14 @@ export function VisitEditDialog({
                     control={form.control}
                     name="time"
                     render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex-1 flex flex-col">
                         <FormLabel>Hora da Visita</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <div className="relative">
+                            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <FormControl>
-                                <SelectTrigger>
-                                     <Clock className="mr-2 h-4 w-4 opacity-50 shrink-0" />
-                                    <SelectValue />
-                                </SelectTrigger>
+                                <Input type="time" {...field} className="pl-9"/>
                             </FormControl>
-                            <SelectContent>
-                                {timeSlots.map(time => (
-                                    <SelectItem key={time} value={time}>{time}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        </div>
                         <FormMessage />
                         </FormItem>
                     )}
