@@ -1,6 +1,7 @@
 // src/app/(app)/settings/page.tsx
 'use client';
 import * as React from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -119,9 +120,11 @@ export default function SettingsPage() {
                                             Sincronize automaticamente seus agendamentos com o Google Agenda para nunca mais perder uma visita.
                                         </p>
                                     </div>
-                                    <Button variant="outline">
-                                        <GoogleIcon className="mr-2 h-4 w-4" />
-                                        Conectar com Google
+                                    <Button variant="outline" asChild>
+                                        <Link href="/api/auth/google">
+                                            <GoogleIcon className="mr-2 h-4 w-4" />
+                                            Conectar com Google
+                                        </Link>
                                     </Button>
                                 </div>
                             )}
