@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
-import { doc, collection, query, updateDoc, addDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { doc, collection, query, updateDoc, addDoc, serverTimestamp, deleteDoc, arrayUnion } from 'firebase/firestore';
 import type { Client, Pool } from '@/lib/types';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -132,6 +132,12 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
   React.useEffect(() => {
     if (client || pools) {
       const formattedPhone = client?.phone ? formatPhoneNumber(client.phone) : '';
+      const poolData = pools?.map(p => ({
+          ...p,
+          lastFilterChange: p.lastFilterChange ? new Date(p.lastFilterChange) : undefined,
+          volume: p.volume ? Math.round(p.volume / 10) * 10 : undefined,
+        })) || [];
+        
       form.reset({
         client: {
           name: client?.name || '',
@@ -140,20 +146,17 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
           startDate: client?.startDate ? new Date(client.startDate) : undefined,
           notes: client?.notes || '',
         },
-        pools: pools?.map(p => ({
-          ...p,
-          lastFilterChange: p.lastFilterChange ? new Date(p.lastFilterChange) : undefined,
-           volume: p.volume ? Math.round(p.volume / 10) * 10 : undefined,
-        })) || []
+        pools: poolData
       });
-       if (pools && pools.length > 0 && activeTab === 'pool-0') {
-         // do nothing, default is fine
-      } else if (pools && pools.length === 0) {
+      
+      if (poolData.length > 0 && !activeTab.startsWith('pool-')) {
+        setActiveTab('pool-0');
+      } else if (poolData.length === 0) {
         setActiveTab('new');
       }
 
     }
-  }, [client, pools, form, activeTab]);
+  }, [client, pools, form]);
 
 
   const handleCalculateVolume = React.useCallback((poolIndex: number) => {
@@ -220,7 +223,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
     
     const poolData = form.getValues(`pools.${poolIndex}`);
     const poolId = poolData.id;
-    setIsSavingPool(poolId || 'new');
+    setIsSavingPool(poolId || `new-${poolIndex}`);
     
     try {
         const dataToSave = {
@@ -247,7 +250,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
             update(poolIndex, { ...poolData, id: newPoolRef.id });
              if (clientRef) {
                 await updateDoc(clientRef, {
-                    poolIds: [...(client?.poolIds || []), newPoolRef.id]
+                    poolIds: arrayUnion(newPoolRef.id)
                 });
             }
             setActiveTab(`pool-${poolIndex}`);
@@ -464,6 +467,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                 {fields.map((field, index) => {
                     const watchedPoolData = form.watch(`pools.${index}`);
                     const tabValue = `pool-${index}`;
+                    const saveButtonId = watchedPoolData.id || `new-${index}`;
                     
                     return (
                         <TabsContent key={field.id} value={tabValue}>
@@ -478,8 +482,8 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                                                 </FormItem>
                                             )} />
                                             <div className="flex items-center gap-2">
-                                                <Button type="submit" size="sm" disabled={isSavingPool === (watchedPoolData.id || 'new')}>
-                                                    {isSavingPool === (watchedPoolData.id || 'new') ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                                <Button type="submit" size="sm" disabled={isSavingPool === saveButtonId}>
+                                                    {isSavingPool === saveButtonId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                                     Salvar Piscina
                                                 </Button>
                                                 <AlertDialog>
@@ -650,6 +654,20 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                         </TabsContent>
                     )
                 })}
+                 <TabsContent value="new">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Nova Piscina</CardTitle>
+                            <CardDescription>Clique no botão "Adicionar Piscina" para começar.</CardDescription>
+                        </CardHeader>
+                        <CardContent className='h-40 flex items-center justify-center'>
+                            <Button type="button" onClick={handleAddNewPool}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Adicionar Nova Piscina
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
             </Tabs>
         </div>
       </div>
