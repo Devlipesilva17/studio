@@ -10,6 +10,7 @@ import type { Visit, Client, Pool } from '@/lib/types';
 import { useUser, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { VisitEditDialog } from '@/components/schedule/visit-edit-dialog';
+import { addDays, startOfWeek } from 'date-fns';
 
 export default function SchedulePage() {
     const { user } = useUser();
@@ -18,10 +19,12 @@ export default function SchedulePage() {
     const [currentDate, setCurrentDate] = React.useState(new Date());
     const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
     const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
-    const [visitsByDay, setVisitsByDay] = React.useState<Visit[][]>([]);
-    const [weekDays, setWeekDays] = React.useState<Date[]>([]);
-    const [weekRange, setWeekRange] = React.useState('');
     const [locale, setLocale] = React.useState('pt-BR');
+
+    React.useEffect(() => {
+        const userLocale = navigator.language || 'pt-BR';
+        setLocale(userLocale);
+    }, []);
 
     const schedulesQuery = useMemoFirebase(() => {
         if (!user || !firestore) return null;
@@ -63,24 +66,13 @@ export default function SchedulePage() {
     }, [selectedDate, visits]);
 
 
-    React.useEffect(() => {
-        const userLocale = navigator.language || 'pt-BR';
-        setLocale(userLocale);
+    const weekDays = React.useMemo(() => {
+        const start = startOfWeek(currentDate, { weekStartsOn: 1 }); // Monday as start of week
+        return Array.from({ length: 7 }).map((_, i) => addDays(start, i));
+    }, [currentDate]);
 
-        const today = new Date(currentDate);
-        const startOfWeek = new Date(today);
-        const dayOfWeek = today.getDay();
-        const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust to Monday as start of week
-        startOfWeek.setDate(diff);
-
-        const days = Array.from({ length: 7 }).map((_, i) => {
-            const day = new Date(startOfWeek);
-            day.setDate(startOfWeek.getDate() + i);
-            return day;
-        });
-        setWeekDays(days);
-        
-        const dailyVisits = days.map(day => 
+    const visitsByDay = React.useMemo(() => {
+        return weekDays.map(day => 
             (visits || []).filter(visit => {
                 const visitDate = new Date(visit.scheduledDate);
                 return visitDate.getFullYear() === day.getFullYear() &&
@@ -88,28 +80,22 @@ export default function SchedulePage() {
                        visitDate.getDate() === day.getDate();
             }).sort((a,b) => a.time.localeCompare(b.time))
         );
-        setVisitsByDay(dailyVisits);
+    }, [weekDays, visits]);
 
-        const start = days[0].toLocaleDateString(userLocale, { month: 'long', day: 'numeric'});
-        const end = days[6].toLocaleDateString(userLocale, { month: 'long', day: 'numeric', year: 'numeric'});
-        setWeekRange(`${start} - ${end}`);
-
-    }, [currentDate, visits]);
+    const weekRange = React.useMemo(() => {
+        const start = weekDays[0];
+        const end = weekDays[6];
+        const startStr = start.toLocaleDateString(locale, { month: 'long', day: 'numeric'});
+        const endStr = end.toLocaleDateString(locale, { month: 'long', day: 'numeric', year: 'numeric'});
+        return `${startStr} - ${endStr}`;
+    }, [weekDays, locale]);
 
     const handlePrevWeek = () => {
-        setCurrentDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setDate(prev.getDate() - 7);
-            return newDate;
-        });
+        setCurrentDate(prev => addDays(prev, -7));
     }
 
     const handleNextWeek = () => {
-        setCurrentDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setDate(prev.getDate() + 7);
-            return newDate;
-        });
+        setCurrentDate(prev => addDays(prev, 7));
     }
     
     const handleDateSelect = (date: Date | undefined) => {
