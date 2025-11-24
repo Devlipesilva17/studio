@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from '@/components/ui/calendar';
-import type { Visit, Client, Pool } from '@/lib/types';
+import type { Visit, Client } from '@/lib/types';
 import { useUser, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
-import { collection, query, where, getDocs, collectionGroup } from 'firebase/firestore';
+import { collection, query, getDocs, onSnapshot } from 'firebase/firestore';
 import { VisitEditDialog } from '@/components/schedule/visit-edit-dialog';
 import { addDays, startOfWeek } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -33,30 +33,45 @@ export default function SchedulePage() {
       if (!user || !firestore) return null;
       return query(collection(firestore, `users/${user.uid}/clients`));
     }, [firestore, user]);
-    const { data: clientList } = useCollection<Client>(clientsQuery);
+    const { data: clientList, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
 
     React.useEffect(() => {
-      if (!user || !firestore) {
-        setIsLoading(false);
-        return;
-      };
-      
-      setIsLoading(true);
-      
-      const schedulesCollectionGroup = collectionGroup(firestore, 'schedules');
-      const userSchedulesQuery = query(schedulesCollectionGroup, where('__name__', '>=', `users/${user.uid}/`), where('__name__', '<', `users/${user.uid}/\uf8ff`));
+        if (!user || !firestore || areClientsLoading) {
+            if (!areClientsLoading) setIsLoading(false);
+            return;
+        }
 
-      const unsubscribe = onSnapshot(userSchedulesQuery, (snapshot) => {
-        const fetchedVisits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Visit));
-        setVisits(fetchedVisits);
-        setIsLoading(false);
-      }, (error) => {
-        console.error("Error fetching schedules:", error);
-        setIsLoading(false);
-      });
+        setIsLoading(true);
 
-      return () => unsubscribe();
-    }, [user, firestore]);
+        if (!clientList || clientList.length === 0) {
+            setIsLoading(false);
+            setVisits([]);
+            return;
+        }
+
+        const unsubscribers = clientList.map(client => {
+            const schedulesCollectionRef = collection(firestore, `users/${user.uid}/clients/${client.id}/schedules`);
+            return onSnapshot(schedulesCollectionRef, (snapshot) => {
+                const fetchedVisits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Visit));
+                
+                setVisits(prevVisits => {
+                    // Remove old visits for this client and add new ones
+                    const otherClientVisits = prevVisits.filter(v => v.clientId !== client.id);
+                    return [...otherClientVisits, ...fetchedVisits];
+                });
+
+                setIsLoading(false);
+            }, (error) => {
+                console.error(`Error fetching schedules for client ${client.id}:`, error);
+                // Optionally handle error for individual client's schedules
+            });
+        });
+
+        // When the component unmounts, unsubscribe from all listeners
+        return () => {
+            unsubscribers.forEach(unsub => unsub());
+        };
+    }, [user, firestore, clientList, areClientsLoading]);
     
 
     const daysWithVisits = React.useMemo(() => {
