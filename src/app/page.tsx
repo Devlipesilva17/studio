@@ -229,7 +229,7 @@ export default function LoginPage() {
                  <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-0 inset-y-0 h-auto px-3 flex items-center"
+                  className="absolute right-0 inset-y-0 h-full px-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
                   type="button"
                 >
