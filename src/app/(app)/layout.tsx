@@ -1,3 +1,6 @@
+// src/app/(app)/layout.tsx
+'use client';
+
 import * as React from 'react';
 import Link from 'next/link';
 import {
@@ -31,8 +34,13 @@ import {
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { PoolIcon } from '@/components/icons';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const [isSheetOpen, setIsSheetOpen] = React.useState(false);
+  const pathname = usePathname();
+
   const navItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/clients', icon: Users, label: 'Clientes' },
@@ -70,7 +78,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.label}
                   href={item.href}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                    pathname === item.href && "bg-muted text-primary"
+                  )}
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
@@ -87,7 +98,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
       <div className="flex flex-col">
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
-          <Sheet>
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button
                 variant="outline"
@@ -101,17 +112,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <SheetContent side="left" className="flex flex-col">
               <nav className="grid gap-2 text-lg font-medium">
                 <Link
-                  href="#"
+                  href="/dashboard"
+                  onClick={() => setIsSheetOpen(false)}
                   className="flex items-center gap-2 text-lg font-semibold mb-4"
                 >
                   <PoolIcon className="h-6 w-6 text-primary" />
-                  <span className="sr-only">PoolCare Pro</span>
+                  <span>PoolCare Pro</span>
                 </Link>
                 {navItems.map((item) => (
-                  <SheetClose asChild key={item.label}>
-                    <Link
+                  <Link
+                      key={item.label}
                       href={item.href}
-                      className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                      onClick={() => setIsSheetOpen(false)}
+                      className={cn(
+                        "mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground",
+                         pathname === item.href && "bg-muted text-foreground"
+                      )}
                     >
                       <item.icon className="h-5 w-5" />
                       {item.label}
@@ -121,7 +137,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         </Badge>
                       )}
                     </Link>
-                  </SheetClose>
                 ))}
               </nav>
             </SheetContent>
@@ -154,7 +169,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Configurações</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/settings">Configurações</Link>
+              </DropdownMenuItem>
               <DropdownMenuItem>Suporte</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
