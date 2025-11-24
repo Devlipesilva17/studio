@@ -11,6 +11,8 @@ import {
   Clipboard,
   Check,
   MoreHorizontal,
+  Save,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,12 +25,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
-import type { Visit, Client } from '@/lib/types';
+import type { Visit, Client, Pool } from '@/lib/types';
 import {
   useUser,
   useFirestore,
   useMemoFirebase,
   useCollection,
+  useDoc,
 } from '@/firebase';
 import {
   collection,
@@ -37,6 +40,7 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { VisitEditDialog } from '@/components/schedule/visit-edit-dialog';
 import { addDays, startOfWeek } from 'date-fns';
@@ -61,6 +65,142 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
+
+
+function QuickEditPopover({ visit }: { visit: Visit }) {
+  const { user, firestore } = useFirebase();
+  const { toast } = useToast();
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  const poolRef = useMemoFirebase(() => {
+    if (!user || !firestore || !visit) return null;
+    return doc(firestore, `users/${user.uid}/clients/${visit.clientId}/pools`, visit.poolId);
+  }, [user, firestore, visit]);
+
+  const { data: poolData, isLoading: isPoolLoading } = useDoc<Pool>(poolRef);
+
+  const [ph, setPh] = React.useState<number | undefined>(undefined);
+  const [chlorine, setChlorine] = React.useState<number | undefined>(undefined);
+  const [alkalinity, setAlkalinity] = React.useState<number | undefined>(undefined);
+  const [calciumHardness, setCalciumHardness] = React.useState<number | undefined>(undefined);
+  const [hasStains, setHasStains] = React.useState(false);
+  const [hasScale, setHasScale] = React.useState(false);
+  const [waterQuality, setWaterQuality] = React.useState<'green' | 'cloudy' | 'crystal-clear'>('crystal-clear');
+
+  React.useEffect(() => {
+    if (poolData) {
+      setPh(poolData.ph);
+      setChlorine(poolData.chlorine);
+      setAlkalinity(poolData.alkalinity);
+      setCalciumHardness(poolData.calciumHardness);
+      setHasStains(poolData.hasStains || false);
+      setHasScale(poolData.hasScale || false);
+      setWaterQuality(poolData.waterQuality || 'crystal-clear');
+    }
+  }, [poolData]);
+
+  const handleSave = async () => {
+    if (!poolRef) return;
+    setIsSaving(true);
+    try {
+      const updatedData: Partial<Pool> = {
+        ph,
+        chlorine,
+        alkalinity,
+        calciumHardness,
+        hasStains,
+        hasScale,
+        waterQuality,
+        updatedAt: serverTimestamp(),
+      };
+      await updateDoc(poolRef, updatedData);
+      toast({ title: "Dados da Piscina Atualizados!" });
+      setIsOpen(false);
+    } catch (error) {
+      toast({ variant: 'destructive', title: "Erro ao Salvar", description: "Não foi possível atualizar os dados da piscina." });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-7 w-7">
+          <Clipboard className="h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80">
+        <div className="grid gap-4">
+          <div className="space-y-2">
+            <h4 className="font-medium leading-none">Atualização Rápida</h4>
+            <p className="text-sm text-muted-foreground">
+              Altere os parâmetros atuais da piscina.
+            </p>
+          </div>
+          {isPoolLoading ? (
+            <Skeleton className="h-48 w-full" />
+          ) : (
+            <div className="grid gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="ph">pH</Label>
+                  <Input id="ph" type="number" step="0.1" value={ph ?? ''} onChange={e => setPh(e.target.valueAsNumber)} className="col-span-2 h-8" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="chlorine">Cloro</Label>
+                  <Input id="chlorine" type="number" step="0.1" value={chlorine ?? ''} onChange={e => setChlorine(e.target.valueAsNumber)} className="col-span-2 h-8" />
+                </div>
+                 <div className="grid gap-2">
+                  <Label htmlFor="alkalinity">Alcalinidade</Label>
+                  <Input id="alkalinity" type="number" value={alkalinity ?? ''} onChange={e => setAlkalinity(e.target.valueAsNumber)} className="col-span-2 h-8" />
+                </div>
+                 <div className="grid gap-2">
+                  <Label htmlFor="hardness">Dureza</Label>
+                  <Input id="hardness" type="number" value={calciumHardness ?? ''} onChange={e => setCalciumHardness(e.target.valueAsNumber)} className="col-span-2 h-8" />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                  <Label>Qualidade da Água</Label>
+                   <Select onValueChange={(v: any) => setWaterQuality(v)} value={waterQuality}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="crystal-clear">Cristalina</SelectItem>
+                        <SelectItem value="cloudy">Turva</SelectItem>
+                        <SelectItem value="green">Verde</SelectItem>
+                      </SelectContent>
+                    </Select>
+              </div>
+
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch id="stains" checked={hasStains} onCheckedChange={setHasStains} />
+                    <Label htmlFor="stains">Manchas</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="scale" checked={hasScale} onCheckedChange={setHasScale} />
+                    <Label htmlFor="scale">Incrustações</Label>
+                  </div>
+              </div>
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Salvar
+              </Button>
+            </div>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 
 export default function SchedulePage() {
   const { user } = useUser();
@@ -132,6 +272,7 @@ export default function SchedulePage() {
             `Error fetching schedules for client ${client.id}:`,
             error
           );
+          setIsLoading(false); // Stop loading even on error for a specific client
         }
       );
     });
@@ -269,11 +410,8 @@ export default function SchedulePage() {
 
   const renderVisitActions = (visit: Visit) => (
     <div className="flex justify-end items-center gap-1">
-      <Button variant="ghost" size="icon" asChild className="h-7 w-7">
-        <Link href={`/clients/${visit.clientId}`}>
-          <Clipboard className="h-4 w-4" />
-        </Link>
-      </Button>
+      <QuickEditPopover visit={visit} />
+      
       {visit.status === 'pending' && (
         <Button
           variant="ghost"

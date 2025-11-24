@@ -35,6 +35,7 @@ export type Pool = {
   lastFilterChange?: string; // ISO 8601 date string
   filterPressure?: number;
   filterCapacity?: number;
+  updatedAt?: any; // Firestore ServerTimestamp
   // Deprecated fields, kept for compatibility, but should be calculated.
   size?: number; 
   lastTreatment?: string;
