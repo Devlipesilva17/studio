@@ -130,7 +130,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
   };
   
-  const resetForms = React.useCallback(() => {
+  const resetForms = () => {
     if (client) {
       const formattedPhone = client.phone ? formatPhoneNumber(client.phone) : '';
       form.reset({
@@ -162,12 +162,15 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
         }
       });
     }
-  }, [client, pool, form]);
+  };
 
 
   React.useEffect(() => {
-    resetForms();
-  }, [client, pool, resetForms]);
+    if(client || pool){
+        resetForms();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client, pool]);
 
   const watchedPoolData = form.watch('pool');
   
@@ -398,8 +401,11 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                         <FormLabel>Tipo da Piscina</FormLabel>
                         <FormControl>
                             <RadioGroup
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
+                                onValueChange={(value) => {
+                                    field.onChange(value);
+                                    handleCalculateVolume();
+                                }}
+                                value={field.value}
                                 className="grid grid-cols-3 gap-4"
                             >
                             {(['quadrilateral', 'circular', 'oval'] as const).map(type => (
@@ -431,7 +437,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                     )}
                 />
                 
-                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
                     {watchedPoolData.type === 'quadrilateral' && (
                         <>
                             <FormField control={form.control} name="pool.length" render={({ field }) => (<FormItem><FormLabel>Comprimento</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
