@@ -109,12 +109,13 @@ export default function SettingsPage() {
     };
 
     const handleGoogleConnect = () => {
+        const url = 'https://accounts.google.com/v3/signin/identifier?dsh=S1611624178:1665765818620318&continue=https://calendar.google.com/calendar/r&followup=https://calendar.google.com/calendar/r&osid=1&passive=1209600&service=cl&flowName=GlifWebSignIn&flowEntry=ServiceLogin&ifkv=AQDHYWrL2lk0_Bcr1n1Y-f-i1sNZRKJK8CNisliX9rpozkqKhY2Jby8gsVZ_wDz_oHqiWmN6uZ6s6g';
         const width = 600;
         const height = 700;
         const left = window.screen.width / 2 - width / 2;
         const top = window.screen.height / 2 - height / 2;
         window.open(
-            '/api/auth/google',
+            url,
             'google-auth',
             `width=${width},height=${height},left=${left},top=${top}`
         );
