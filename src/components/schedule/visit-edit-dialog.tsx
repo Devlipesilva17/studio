@@ -13,7 +13,6 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Form,
   FormControl,
@@ -24,7 +23,7 @@ import {
 } from '@/components/ui/form';
 import type { Client, Pool, Visit } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Clock, Loader2 } from 'lucide-react';
 import { useAuth, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, serverTimestamp, addDoc, collection, query } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -45,6 +44,9 @@ const formSchema = z.object({
   time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: 'Formato de hora inválido (HH:mm).' }),
   notes: z.string().optional(),
 });
+
+type VisitFormValues = z.infer<typeof formSchema>;
+
 
 type VisitEditDialogProps = {
   visit?: Visit;
@@ -67,7 +69,7 @@ export function VisitEditDialog({
   
   const [selectedClientId, setSelectedClientId] = React.useState<string | undefined>(visit?.clientId);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<VisitFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       clientId: visit?.clientId || '',
@@ -114,7 +116,7 @@ export function VisitEditDialog({
     form.setValue('poolId', ''); // Reset pool selection
   }
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: VisitFormValues) => {
     if (!auth?.currentUser || !firestore) {
       toast({
         variant: 'destructive',
@@ -176,6 +178,17 @@ export function VisitEditDialog({
       setIsSaving(false);
     }
   };
+  
+  const timeSlots = React.useMemo(() => {
+    const slots = [];
+    for (let i = 7; i <= 19; i++) {
+        slots.push(`${String(i).padStart(2, '0')}:00`);
+        if (i < 19) {
+            slots.push(`${String(i).padStart(2, '0')}:30`);
+        }
+    }
+    return slots;
+  }, []);
 
 
   return (
@@ -235,58 +248,70 @@ export function VisitEditDialog({
                     </FormItem>
                   )}
                 />
-                 <FormField
-                  control={form.control}
-                  name="scheduledDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Data da Visita</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP", { locale: ptBR })
-                              ) : (
-                                <span>Escolha uma data</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                    control={form.control}
+                    name="scheduledDate"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <FormLabel>Data da Visita</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP", { locale: ptBR })
+                                ) : (
+                                    <span>Escolha uma data</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
 
-                <FormField
-                  control={form.control}
-                  name="time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Hora da Visita</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    <FormField
+                    control={form.control}
+                    name="time"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Hora da Visita</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                     <Clock className="mr-2 h-4 w-4 opacity-50 shrink-0" />
+                                    <SelectValue />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {timeSlots.map(time => (
+                                    <SelectItem key={time} value={time}>{time}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                </div>
                 
                 <FormField
                   control={form.control}
