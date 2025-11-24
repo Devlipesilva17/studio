@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/form';
 import type { Client, Pool, Visit } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, Clock, Loader2 } from 'lucide-react';
+import { CalendarIcon, Clock, Loader2, Check } from 'lucide-react';
 import { useAuth, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, serverTimestamp, addDoc, collection, query } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -66,7 +66,8 @@ export function VisitEditDialog({
   const [isSaving, setIsSaving] = React.useState(false);
   const auth = useAuth();
   const firestore = useFirestore();
-  
+  const [isClientPopoverOpen, setIsClientPopoverOpen] = React.useState(false);
+
   const [selectedClientId, setSelectedClientId] = React.useState<string | undefined>(visit?.clientId);
 
   const form = useForm<VisitFormValues>({
@@ -109,11 +110,12 @@ export function VisitEditDialog({
       setSelectedClientId(undefined);
     }
   }, [visit, form, open]);
-  
+
   const handleClientChange = (clientId: string) => {
     setSelectedClientId(clientId);
     form.setValue('clientId', clientId);
     form.setValue('poolId', ''); // Reset pool selection
+    setIsClientPopoverOpen(false);
   }
 
   const onSubmit = async (values: VisitFormValues) => {
@@ -127,7 +129,7 @@ export function VisitEditDialog({
       return;
     }
     setIsSaving(true);
-    
+
     try {
       const { clientId, poolId, scheduledDate, time, notes } = values;
       const clientName = clients.find(c => c.id === clientId)?.name || 'Cliente desconhecido';
@@ -145,7 +147,7 @@ export function VisitEditDialog({
       };
 
       const collectionRef = collection(firestore, `users/${auth.currentUser.uid}/clients/${clientId}/schedules`);
-      
+
       if (visit?.id) {
         // Update existing visit
         const visitRef = doc(collectionRef, visit.id);
@@ -165,7 +167,7 @@ export function VisitEditDialog({
           description: `Nova visita para ${clientName} em ${format(scheduledDate, 'PPP', { locale: ptBR })}.`,
         });
       }
-      
+
       onOpenChange(false);
     } catch (error) {
       console.error("Error saving visit:", error);
@@ -178,7 +180,7 @@ export function VisitEditDialog({
       setIsSaving(false);
     }
   };
-  
+
   const timeSlots = React.useMemo(() => {
     const slots = [];
     for (let i = 7; i <= 19; i++) {
@@ -189,6 +191,23 @@ export function VisitEditDialog({
     }
     return slots;
   }, []);
+
+  const groupedClients = React.useMemo(() => {
+    if (!clients) return {};
+    return clients
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .reduce((acc, client) => {
+        const firstLetter = client.name[0].toUpperCase();
+        if (!acc[firstLetter]) {
+          acc[firstLetter] = [];
+        }
+        acc[firstLetter].push(client);
+        return acc;
+      }, {} as Record<string, Client[]>);
+  }, [clients]);
+
+  const selectedClientName = clients.find(c => c.id === selectedClientId)?.name || "Selecione um cliente";
 
 
   return (
@@ -204,24 +223,59 @@ export function VisitEditDialog({
           <div className='p-4'>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
+                 <FormField
                   control={form.control}
                   name="clientId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Cliente</FormLabel>
-                      <Select onValueChange={handleClientChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um cliente" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {clients.map(client => (
-                            <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        <Popover open={isClientPopoverOpen} onOpenChange={setIsClientPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                 <FormControl>
+                                    <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                        "w-full justify-between",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {selectedClientName}
+                                    </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                               <ScrollArea className="h-72">
+                                 {Object.entries(groupedClients).map(([letter, clientGroup]) => (
+                                    <div key={letter} className="relative">
+                                        <div className="sticky top-0 z-10 bg-muted px-3 py-1 text-sm font-semibold">
+                                            {letter}
+                                        </div>
+                                        <div className="p-1">
+                                         {clientGroup.map(client => (
+                                            <Button
+                                                variant="ghost"
+                                                key={client.id}
+                                                onClick={() => handleClientChange(client.id)}
+                                                className="w-full justify-start font-normal h-auto py-2"
+                                            >
+                                                <div className="flex justify-between w-full items-center">
+                                                    <div className="flex flex-col text-left">
+                                                        <span>{client.name}</span>
+                                                    </div>
+                                                    <div className="flex items-center">
+                                                        <span className="text-xs text-muted-foreground mr-2">{client.neighborhood}</span>
+                                                         {field.value === client.id && <Check className="h-4 w-4 text-primary" />}
+                                                    </div>
+                                                </div>
+                                            </Button>
+                                        ))}
+                                        </div>
+                                    </div>
+                                ))}
+                               </ScrollArea>
+                            </PopoverContent>
+                        </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -312,7 +366,7 @@ export function VisitEditDialog({
                     )}
                     />
                 </div>
-                
+
                 <FormField
                   control={form.control}
                   name="notes"
@@ -326,7 +380,7 @@ export function VisitEditDialog({
                     </FormItem>
                   )}
                 />
-                
+
                 <DialogFooter className="pt-4">
                   <DialogClose asChild>
                     <Button type="button" variant="secondary">
