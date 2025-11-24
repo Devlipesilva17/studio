@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Save, Loader2, RefreshCw, MapPin, CalendarIcon, Droplets, Calculator, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, RefreshCw, MapPin, CalendarIcon, Droplets, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -129,16 +129,16 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
   };
   
-  const resetForms = React.useCallback(() => {
-    if (client) {
-      const formattedPhone = client.phone ? formatPhoneNumber(client.phone) : '';
+  React.useEffect(() => {
+    if (client || pools) {
+      const formattedPhone = client?.phone ? formatPhoneNumber(client.phone) : '';
       form.reset({
         client: {
-          name: client.name || '',
+          name: client?.name || '',
           phone: formattedPhone,
-          address: client.address || '',
-          startDate: client.startDate ? new Date(client.startDate) : undefined,
-          notes: client.notes || '',
+          address: client?.address || '',
+          startDate: client?.startDate ? new Date(client.startDate) : undefined,
+          notes: client?.notes || '',
         },
         pools: pools?.map(p => ({
           ...p,
@@ -148,13 +148,6 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
       });
     }
   }, [client, pools, form]);
-
-
-  React.useEffect(() => {
-    if((client || pools) && !arePoolsLoading){
-        resetForms();
-    }
-  }, [client, pools, arePoolsLoading, resetForms]);
 
 
   const handleCalculateVolume = React.useCallback((poolIndex: number) => {
@@ -325,11 +318,17 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
   
     const watchedPhone = form.watch('client.phone');
     const watchedAddress = form.watch('client.address');
-    const cleanPhoneNumber = React.useMemo(() => watchedPhone?.replace(/\D/g, '') || '', [watchedPhone]);
+    
+    const cleanPhoneNumber = React.useMemo(() => {
+      return watchedPhone?.replace(/\D/g, '') || '';
+    }, [watchedPhone]);
+
     const encodedAddress = encodeURIComponent(watchedAddress || '');
     const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
     const whatsappUrl = `https://wa.me/55${cleanPhoneNumber}`;
-    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => form.setValue('client.phone', formatPhoneNumber(e.target.value));
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        form.setValue('client.phone', formatPhoneNumber(e.target.value));
+    };
     
   if (isLoading) {
     return (
@@ -386,7 +385,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                 </div>
             </div>
             <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={resetForms} disabled={isSavingClient}><RefreshCw className="mr-2 h-4 w-4" />Resetar</Button>
+                <Button type="button" variant="outline" onClick={() => form.reset()} disabled={isSavingClient}><RefreshCw className="mr-2 h-4 w-4" />Resetar</Button>
             </div>
         </div>
 
@@ -556,7 +555,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                                                 {watchedPoolData.type === 'oval' && (
                                                     <>
                                                         <FormField control={form.control} name={`pools.${index}.length`} render={({ field: f }) => (<FormItem><FormLabel>Comprimento</FormLabel><FormControl><Input type="number" step="0.1" {...f} onChange={(e) => { f.onChange(e); handleCalculateVolume(index); }}/></FormControl><FormMessage /></FormItem>)} />
-                                                        <FormField control={form.control} name={`pools.${index}.width`} render={({ field: f }) => (<FormItem><FormLabel>Largura</FormLabel><FormControl><Input type="number" step="0.1" {...f} onChange={(e) => { f.onChange(e); handleCalculateVolume(index); }}/></FormControl><FormMessage /></FormMessage /></FormItem>)} />
+                                                        <FormField control={form.control} name={`pools.${index}.width`} render={({ field: f }) => (<FormItem><FormLabel>Largura</FormLabel><FormControl><Input type="number" step="0.1" {...f} onChange={(e) => { f.onChange(e); handleCalculateVolume(index); }}/></FormControl><FormMessage /></FormItem>)} />
                                                     </>
                                                 )}
                                                 <FormField control={form.control} name={`pools.${index}.averageDepth`} render={({ field: f }) => (<FormItem><FormLabel>Profundidade Média</FormLabel><FormControl><Input type="number" step="0.1" {...f} onChange={(e) => { f.onChange(e); handleCalculateVolume(index); }}/></FormControl><FormMessage /></FormItem>)} />
