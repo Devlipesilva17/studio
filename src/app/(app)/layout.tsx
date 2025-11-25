@@ -39,6 +39,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
@@ -169,6 +170,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
             </form>
           </div>
+          <ThemeToggle />
           <Link href="/settings">
               <Button variant="outline" size="icon" className="rounded-full">
                   <Settings className="h-5 w-5" />
