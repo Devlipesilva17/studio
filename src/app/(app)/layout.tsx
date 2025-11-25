@@ -70,6 +70,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     },
   ];
 
+  const notifications = [
+    { id: 1, title: "Pagamento Atrasado", description: "Cliente John Doe tem um pagamento pendente.", read: false },
+    { id: 2, title: "Estoque Baixo", description: "Produto 'Cloro Tabs' está com apenas 5 unidades.", read: false },
+    { id: 3, title: "Visita Concluída", description: "A visita para Jane Smith foi marcada como concluída.", read: true },
+  ];
+
+  const unreadNotifications = notifications.filter(n => !n.read).length;
+
+
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-card md:block">
@@ -82,10 +91,32 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <PoolIcon className="h-6 w-6 text-primary" />
               <span>Piscinei App</span>
             </Link>
-            <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
-              <Bell className="h-4 w-4" />
-              <span className="sr-only">Ativar notificações</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="ml-auto h-8 w-8 relative">
+                  <Bell className="h-4 w-4" />
+                  {unreadNotifications > 0 && (
+                     <span className="absolute top-0 right-0 flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                    </span>
+                  )}
+                  <span className="sr-only">Ativar notificações</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Notificações</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {notifications.map(notification => (
+                   <DropdownMenuItem key={notification.id} className={cn(!notification.read && "font-bold")}>
+                      <div className="flex flex-col">
+                        <p>{notification.title}</p>
+                        <p className="text-xs text-muted-foreground">{notification.description}</p>
+                      </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
