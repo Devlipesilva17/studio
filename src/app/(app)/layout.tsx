@@ -38,15 +38,48 @@ import { Badge } from '@/components/ui/badge';
 import { PoolIcon } from '@/components/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/firebase';
+import { useAuth, useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { ThemeToggle } from '@/components/theme-toggle';
+import type { Visit, Client } from '@/lib/types';
+import { collection, onSnapshot, query } from 'firebase/firestore';
+
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const pathname = usePathname();
   const auth = useAuth();
+  const { user } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
+
+  const [visits, setVisits] = React.useState<Visit[]>([]);
+
+  const clientsQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return query(collection(firestore, `users/${user.uid}/clients`));
+  }, [user, firestore]);
+  const { data: clientList, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
+  
+  React.useEffect(() => {
+    if (!user || !firestore || !clientList) {
+      return;
+    }
+
+    const unsubscribes = clientList.map(client => {
+      const scheduleCollection = collection(firestore, `users/${user.uid}/clients/${client.id}/schedules`);
+      return onSnapshot(scheduleCollection, snapshot => {
+        setVisits(prev => {
+          const otherClientVisits = prev.filter(v => v.clientId !== client.id);
+          const newVisits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Visit));
+          return [...otherClientVisits, ...newVisits];
+        });
+      });
+    });
+    
+    return () => unsubscribes.forEach(unsub => unsub());
+
+  }, [user, firestore, clientList]);
 
 
   const handleLogout = async () => {
@@ -56,10 +89,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const todayVisitsCount = React.useMemo(() => {
+      if (!visits) return 0;
+      const todayString = new Date().toDateString();
+      return visits.filter(v => new Date(v.scheduledDate).toDateString() === todayString && v.status === 'pending').length;
+  }, [visits]);
+
   const navItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/clients', icon: Users, label: 'Clientes' },
-    { href: '/schedule', icon: Calendar, label: 'Agenda', badge: '2' },
+    { href: '/schedule', icon: Calendar, label: 'Agenda', badge: todayVisitsCount > 0 ? String(todayVisitsCount) : undefined },
     { href: '/products', icon: FlaskConical, label: 'Produtos' },
     { href: '/payments', icon: CreditCard, label: 'Pagamentos' },
     { href: '/reports', icon: BarChart3, label: 'Relatórios' },
