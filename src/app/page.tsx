@@ -205,7 +205,7 @@ export default function LoginPage() {
                   </div>
                 )}
               </div>
-              <div className="grid gap-2 relative">
+              <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Senha</Label>
                   {!isSignUp && (
@@ -217,25 +217,27 @@ export default function LoginPage() {
                     </Link>
                   )}
                 </div>
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                  className="pr-10"
-                />
-                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-1 top-[2.3rem] -translate-y-1/2 h-auto p-1 text-muted-foreground"
-                  onClick={() => setShowPassword(!showPassword)}
-                  type="button"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  <span className="sr-only">{showPassword ? "Ocultar senha" : "Mostrar senha"}</span>
-                </Button>
+                <div className="relative">
+                    <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                    className="pr-10"
+                    />
+                    <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-auto p-1 text-muted-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                    type="button"
+                    >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    <span className="sr-only">{showPassword ? "Ocultar senha" : "Mostrar senha"}</span>
+                    </Button>
+                </div>
               </div>
               <Button onClick={handleAuthAction} type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
