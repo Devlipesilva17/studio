@@ -97,9 +97,9 @@ export default function ProductsPage() {
   }
 
   const getStockStatus = (stock: number) => {
-    if (stock > 10) return { text: 'Em Estoque', variant: 'default' as const, status: 'in-stock', color: 'text-green-600' };
-    if (stock > 0) return { text: 'Estoque Baixo', variant: 'secondary' as const, status: 'low-stock', color: 'text-amber-600' };
-    return { text: 'Fora de Estoque', variant: 'destructive' as const, status: 'out-of-stock', color: 'text-red-600' };
+    if (stock > 10) return { text: 'Em Estoque', variant: 'default' as const, status: 'in-stock' };
+    if (stock > 0) return { text: 'Estoque Baixo', variant: 'secondary' as const, status: 'low-stock' };
+    return { text: 'Fora de Estoque', variant: 'destructive' as const, status: 'out-of-stock' };
   };
   
   const filteredProducts = React.useMemo(() => {
@@ -110,6 +110,43 @@ export default function ProductsPage() {
     }
     return productList.filter(p => getStockStatus(p.stock).status === filter);
   }, [productList, filter]);
+
+  const exportToCSV = () => {
+    if (!filteredProducts || filteredProducts.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Nenhum produto para exportar",
+        description: "A lista de produtos atual está vazia.",
+      });
+      return;
+    }
+
+    const headers = ['ID', 'Nome', 'Descrição', 'Custo', 'Estoque'];
+    const csvRows = [headers.join(',')];
+
+    for (const product of filteredProducts) {
+      const values = [
+        product.id,
+        `"${product.name.replace(/"/g, '""')}"`,
+        `"${(product.description || '').replace(/"/g, '""')}"`,
+        product.cost,
+        product.stock,
+      ];
+      csvRows.push(values.join(','));
+    }
+
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'produtos.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
 
   return (
     <>
@@ -126,7 +163,7 @@ export default function ProductsPage() {
             <TabsTrigger value="out-of-stock">Fora de Estoque</TabsTrigger>
           </TabsList>
           <div className="ml-auto flex items-center gap-2">
-            <Button size="sm" variant="outline" className="h-8 gap-1">
+            <Button size="sm" variant="outline" className="h-8 gap-1" onClick={exportToCSV}>
               <File className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                 Exportar
@@ -191,7 +228,7 @@ export default function ProductsPage() {
                           <TableCell className="hidden md:table-cell">
                             R$ {product.cost.toFixed(2).replace('.', ',')}
                           </TableCell>
-                          <TableCell className={cn("hidden md:table-cell text-right font-bold", stockStatus.color)}>
+                          <TableCell className={cn("hidden md:table-cell text-right font-bold", stockStatus.status === 'in-stock' ? 'text-green-600' : stockStatus.status === 'low-stock' ? 'text-amber-600' : 'text-red-600')}>
                             {product.stock}
                           </TableCell>
                           <TableCell>
@@ -263,3 +300,5 @@ export default function ProductsPage() {
     </>
   );
 }
+
+    
