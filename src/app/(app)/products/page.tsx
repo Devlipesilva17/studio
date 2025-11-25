@@ -105,6 +105,9 @@ export default function ProductsPage() {
   const filteredProducts = React.useMemo(() => {
     if (!productList) return [];
     if (filter === 'all') return productList;
+    if (filter === 'in-stock') {
+        return productList.filter(p => getStockStatus(p.stock).status === 'in-stock' || getStockStatus(p.stock).status === 'low-stock');
+    }
     return productList.filter(p => getStockStatus(p.stock).status === filter);
   }, [productList, filter]);
 
