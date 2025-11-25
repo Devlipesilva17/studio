@@ -16,11 +16,11 @@ function getFirebaseAdminApp(): App {
  * A utility function to create the HTML script that communicates with the parent window.
  * This script sends a message and then closes the popup.
  */
-const createPopupCloserScript = (data: { type: string; origin: string;[key: string]: any }) => `
+const createPopupCloserScript = (data: { type: string;[key: string]: any }) => `
   <script>
     if (window.opener) {
-      // Use the specified origin to ensure the message is sent to the correct domain
-      window.opener.postMessage(${JSON.stringify(data)}, "${data.origin}");
+      // Use '*' for a flexible origin, or dynamically determine it if security is a major concern.
+      window.opener.postMessage(${JSON.stringify(data)}, "*");
     }
     window.close();
   </script>
@@ -33,30 +33,22 @@ export async function GET(req: NextRequest) {
   const state = searchParams.get('state'); // The user's UID
   const error = searchParams.get('error');
 
-  // Determine the opener's origin. For Cloud Workstations, we trust the host.
-  // For production, you might want a more secure way to determine this.
-  const openerOrigin = req.headers.get('origin') || `https://${req.headers.get('host')}`;
-
   if (error) {
     return new Response(
-      createPopupCloserScript({ type: 'google-auth-error', message: `O acesso foi negado: ${error}`, origin: openerOrigin }),
+      createPopupCloserScript({ type: 'google-auth-error', message: `O acesso foi negado: ${error}` }),
       { headers: { 'Content-Type': 'text/html' } }
     );
   }
 
   if (!code || !state) {
     return new Response(
-      createPopupCloserScript({ type: 'google-auth-error', message: 'Parâmetros de callback inválidos. Código ou estado ausente.', origin: openerOrigin }),
+      createPopupCloserScript({ type: 'google-auth-error', message: 'Parâmetros de callback inválidos. Código ou estado ausente.' }),
       { headers: { 'Content-Type': 'text/html' } }
     );
   }
 
   try {
-    const host = req.headers.get('host')!;
-    const protocol = host.startsWith('localhost') ? 'http' : 'https';
-    const redirectUri = `${protocol}://${host}/api/auth/google/callback`;
-
-    const oauth2Client = getOAuth2Client(redirectUri);
+    const oauth2Client = getOAuth2Client(req);
 
     const { tokens } = await oauth2Client.getToken(code);
 
@@ -78,7 +70,7 @@ export async function GET(req: NextRequest) {
 
     // Return a success message and close the popup
     return new Response(
-      createPopupCloserScript({ type: 'google-auth-success', origin: openerOrigin }),
+      createPopupCloserScript({ type: 'google-auth-success' }),
       { headers: { 'Content-Type': 'text/html' } }
     );
 
@@ -89,7 +81,7 @@ export async function GET(req: NextRequest) {
     const userFriendlyMessage = `Erro: ${errorMessage}. Se o erro for 'invalid_grant', verifique se a Tela de Permissão OAuth está publicada no Google Cloud Console e se o redirect_uri está correto.`;
     
     return new Response(
-      createPopupCloserScript({ type: 'google-auth-error', message: userFriendlyMessage, origin: openerOrigin }),
+      createPopupCloserScript({ type: 'google-auth-error', message: userFriendlyMessage }),
       { headers: { 'Content-Type': 'text/html' } }
     );
   }
