@@ -239,15 +239,34 @@ export default function SchedulePage() {
   }, [firestore, user]);
   const { data: clientList, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
   
-  const schedulesQuery = useMemoFirebase(() => {
-      if (!user || !firestore) return null;
-      // Use a collection group query to fetch all schedules for the user.
-      // This is much more efficient than fetching clients and then schedules for each client.
-      // This query requires a composite index in Firestore. The error in the browser console will provide a link to create it.
-      return query(collectionGroup(firestore, 'schedules'), where('userId', '==', user.uid));
-  }, [user, firestore]);
-  
-  const { data: visits, isLoading: areSchedulesLoading } = useCollection<Visit>(schedulesQuery);
+  const [visits, setVisits] = React.useState<Visit[]>([]);
+  const [areSchedulesLoading, setAreSchedulesLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (!user || !firestore || !clientList) {
+      if (!areClientsLoading) {
+        setAreSchedulesLoading(false);
+      }
+      return;
+    };
+    
+    setAreSchedulesLoading(true);
+    const unsubscribes = clientList.map(client => {
+      const scheduleCollection = collection(firestore, `users/${user.uid}/clients/${client.id}/schedules`);
+      return onSnapshot(scheduleCollection, snapshot => {
+        setVisits(prev => {
+          const otherClientVisits = prev.filter(v => v.clientId !== client.id);
+          const newVisits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Visit));
+          return [...otherClientVisits, ...newVisits];
+        });
+      });
+    });
+
+    setAreSchedulesLoading(false);
+
+    return () => unsubscribes.forEach(unsub => unsub());
+
+  }, [user, firestore, clientList, areClientsLoading]);
   
   const isLoading = areClientsLoading || areSchedulesLoading;
 
