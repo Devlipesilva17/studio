@@ -83,6 +83,8 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 
 function QuickEditDialog({ visit }: { visit: Visit }) {
@@ -90,6 +92,8 @@ function QuickEditDialog({ visit }: { visit: Visit }) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isProductPopoverOpen, setIsProductPopoverOpen] = React.useState(false);
+
 
   const poolRef = useMemoFirebase(() => {
     if (!user || !firestore || !visit || !visit.poolId) return null;
@@ -133,21 +137,31 @@ function QuickEditDialog({ visit }: { visit: Visit }) {
 
   const handleProductQuantityChange = (productId: string, quantity: number) => {
     setProductsUsed(prev => {
-        const existingProduct = prev.find(p => p.productId === productId);
         if (quantity > 0) {
-            if (existingProduct) {
-                return prev.map(p => p.productId === productId ? { ...p, quantity } : p);
-            } else {
-                return [...prev, { productId, quantity }];
-            }
+            return prev.map(p => p.productId === productId ? { ...p, quantity } : p);
         } else {
             return prev.filter(p => p.productId !== productId);
         }
     });
   };
 
+  const handleAddProduct = (product: Product) => {
+    setProductsUsed(prev => {
+        if (prev.some(p => p.productId === product.id)) {
+            return prev;
+        }
+        return [...prev, { productId: product.id, quantity: 1 }];
+    });
+    setIsProductPopoverOpen(false);
+  };
+  
+  const handleRemoveProduct = (productId: string) => {
+      setProductsUsed(prev => prev.filter(p => p.productId !== productId));
+  };
+
+
   const handleSave = async () => {
-    if (!poolRef || !user || !visit) return;
+    if (!poolRef || !user || !visit || !firestore) return;
     setIsSaving(true);
     try {
       const updatedPoolData: Partial<Pool> = {
@@ -174,6 +188,11 @@ function QuickEditDialog({ visit }: { visit: Visit }) {
   };
 
   const isLoading = isPoolLoading || areProductsLoading;
+
+  const availableProducts = React.useMemo(() => {
+    return productList?.filter(p => !productsUsed.some(up => up.productId === p.id) && p.stock > 0) || [];
+  }, [productList, productsUsed]);
+
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -239,25 +258,78 @@ function QuickEditDialog({ visit }: { visit: Visit }) {
 
             <div className="border-t pt-4">
                 <h4 className="font-medium text-sm mb-3">Produtos Utilizados</h4>
-                <div className="space-y-3">
-                    {productList?.map(product => (
-                        <div key={product.id} className="flex items-center justify-between">
-                            <Label htmlFor={`prod-${product.id}`} className="flex-1">
-                                {product.name} <span className="text-xs text-muted-foreground">({product.stock} em estoque)</span>
-                            </Label>
+                 <div className="space-y-3">
+                  {productsUsed.map((usedProduct) => {
+                    const productInfo = productList?.find(
+                      (p) => p.id === usedProduct.productId
+                    );
+                    if (!productInfo) return null;
+                    return (
+                      <div
+                        key={usedProduct.productId}
+                        className="flex items-center justify-between"
+                      >
+                        <Label
+                          htmlFor={`prod-${usedProduct.productId}`}
+                          className="flex-1"
+                        >
+                          {productInfo.name}{' '}
+                          <span className="text-xs text-muted-foreground">
+                            ({productInfo.stock} em estoque)
+                          </span>
+                        </Label>
+                        <div className="flex items-center gap-2">
                             <Input
-                                id={`prod-${product.id}`}
+                                id={`prod-${usedProduct.productId}`}
                                 type="number"
-                                min="0"
-                                max={product.stock}
-                                value={productsUsed.find(p => p.productId === product.id)?.quantity || ''}
-                                onChange={e => handleProductQuantityChange(product.id, e.target.valueAsNumber)}
+                                min="1"
+                                max={productInfo.stock}
+                                value={usedProduct.quantity}
+                                onChange={(e) =>
+                                handleProductQuantityChange(
+                                    usedProduct.productId,
+                                    e.target.valueAsNumber
+                                )
+                                }
                                 className="w-20 h-8"
-                                placeholder="0"
                             />
+                            <Button variant="ghost" size="icon" className='h-8 w-8 text-destructive' onClick={() => handleRemoveProduct(usedProduct.productId)}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
                         </div>
-                    ))}
+                      </div>
+                    );
+                  })}
                 </div>
+                <Popover
+                  open={isProductPopoverOpen}
+                  onOpenChange={setIsProductPopoverOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="mt-4">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Adicionar Produto
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Buscar produto..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          {availableProducts.map((product) => (
+                            <CommandItem
+                              key={product.id}
+                              onSelect={() => handleAddProduct(product)}
+                            >
+                              {product.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
             </div>
           </div>
         )}

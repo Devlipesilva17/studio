@@ -547,7 +547,7 @@ export function VisitEditDialog({
                 />
 
                 <div className="border-t pt-4">
-                  <FormLabel>Produtos a serem Utilizados</FormLabel>
+                  <FormLabel>Produtos Utilizados</FormLabel>
                    <div className="space-y-3 mt-2">
                     {watchedProductsUsed.map((usedProduct) => {
                       const productInfo = productList?.find(p => p.id === usedProduct.productId);
