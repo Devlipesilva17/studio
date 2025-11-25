@@ -25,7 +25,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
-import type { Visit, Client, Pool } from '@/lib/types';
+import type { Visit, Client, Pool, Product } from '@/lib/types';
 import {
   useUser,
   useFirestore,
@@ -82,6 +82,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 function QuickEditDialog({ visit }: { visit: Visit }) {
@@ -96,6 +97,12 @@ function QuickEditDialog({ visit }: { visit: Visit }) {
   }, [user, firestore, visit]);
 
   const { data: poolData, isLoading: isPoolLoading } = useDoc<Pool>(poolRef);
+  
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'products'));
+  }, [firestore]);
+  const { data: productList, isLoading: areProductsLoading } = useCollection<Product>(productsQuery);
 
   const [ph, setPh] = React.useState<number | undefined>(undefined);
   const [chlorine, setChlorine] = React.useState<number | undefined>(undefined);
@@ -104,24 +111,46 @@ function QuickEditDialog({ visit }: { visit: Visit }) {
   const [hasStains, setHasStains] = React.useState(false);
   const [hasScale, setHasScale] = React.useState(false);
   const [waterQuality, setWaterQuality] = React.useState<'green' | 'cloudy' | 'crystal-clear'>('crystal-clear');
+  const [productsUsed, setProductsUsed] = React.useState<Visit['productsUsed']>([]);
+
 
   React.useEffect(() => {
-    if (poolData && isOpen) {
-      setPh(poolData.ph);
-      setChlorine(poolData.chlorine);
-      setAlkalinity(poolData.alkalinity);
-      setCalciumHardness(poolData.calciumHardness);
-      setHasStains(poolData.hasStains || false);
-      setHasScale(poolData.hasScale || false);
-      setWaterQuality(poolData.waterQuality || 'crystal-clear');
+    if (isOpen) {
+      if (poolData) {
+        setPh(poolData.ph);
+        setChlorine(poolData.chlorine);
+        setAlkalinity(poolData.alkalinity);
+        setCalciumHardness(poolData.calciumHardness);
+        setHasStains(poolData.hasStains || false);
+        setHasScale(poolData.hasScale || false);
+        setWaterQuality(poolData.waterQuality || 'crystal-clear');
+      }
+      if (visit) {
+        setProductsUsed(visit.productsUsed || []);
+      }
     }
-  }, [poolData, isOpen]);
+  }, [poolData, visit, isOpen]);
+
+  const handleProductQuantityChange = (productId: string, quantity: number) => {
+    setProductsUsed(prev => {
+        const existingProduct = prev.find(p => p.productId === productId);
+        if (quantity > 0) {
+            if (existingProduct) {
+                return prev.map(p => p.productId === productId ? { ...p, quantity } : p);
+            } else {
+                return [...prev, { productId, quantity }];
+            }
+        } else {
+            return prev.filter(p => p.productId !== productId);
+        }
+    });
+  };
 
   const handleSave = async () => {
-    if (!poolRef) return;
+    if (!poolRef || !user || !visit) return;
     setIsSaving(true);
     try {
-      const updatedData: Partial<Pool> = {
+      const updatedPoolData: Partial<Pool> = {
         ph,
         chlorine,
         alkalinity,
@@ -130,15 +159,21 @@ function QuickEditDialog({ visit }: { visit: Visit }) {
         hasScale,
         waterQuality,
       };
-      await updateDoc(poolRef, updatedData);
-      toast({ title: "Dados da Piscina Atualizados!" });
+      await updateDoc(poolRef, updatedPoolData);
+
+      const visitRef = doc(firestore, `users/${user.uid}/clients/${visit.clientId}/schedules`, visit.id);
+      await updateDoc(visitRef, { productsUsed });
+
+      toast({ title: "Dados da Visita Atualizados!" });
       setIsOpen(false);
     } catch (error) {
-      toast({ variant: 'destructive', title: "Erro ao Salvar", description: "Não foi possível atualizar os dados da piscina." });
+      toast({ variant: 'destructive', title: "Erro ao Salvar", description: "Não foi possível atualizar os dados." });
     } finally {
       setIsSaving(false);
     }
   };
+
+  const isLoading = isPoolLoading || areProductsLoading;
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -147,58 +182,86 @@ function QuickEditDialog({ visit }: { visit: Visit }) {
           <Clipboard className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Atualização Rápida</DialogTitle>
+          <DialogTitle>Atualização Rápida da Visita</DialogTitle>
           <DialogDescription>
-            Altere os parâmetros atuais da piscina.
+            Altere os parâmetros da piscina e adicione produtos utilizados.
           </DialogDescription>
         </DialogHeader>
-        {isPoolLoading ? (
-          <Skeleton className="h-48 w-full" />
+        <ScrollArea className="max-h-[60vh] pr-4">
+        {isLoading ? (
+          <Skeleton className="h-96 w-full" />
         ) : (
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="ph">pH</Label>
-                <Input id="ph" type="number" step="0.1" value={ph ?? ''} onChange={e => setPh(e.target.valueAsNumber)} className="col-span-2 h-8" />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="chlorine">Cloro</Label>
-                <Input id="chlorine" type="number" step="0.1" value={chlorine ?? ''} onChange={e => setChlorine(e.target.valueAsNumber)} className="col-span-2 h-8" />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="alkalinity">Alcalinidade</Label>
-                <Input id="alkalinity" type="number" value={alkalinity ?? ''} onChange={e => setAlkalinity(e.target.valueAsNumber)} className="col-span-2 h-8" />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="hardness">Dureza</Label>
-                <Input id="hardness" type="number" value={calciumHardness ?? ''} onChange={e => setCalciumHardness(e.target.valueAsNumber)} className="col-span-2 h-8" />
-              </div>
-            </div>
-            <div className="grid gap-2">
-                <Label>Qualidade da Água</Label>
-                  <Select onValueChange={(v: any) => setWaterQuality(v)} value={waterQuality}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="crystal-clear">Cristalina</SelectItem>
-                      <SelectItem value="cloudy">Turva</SelectItem>
-                      <SelectItem value="green">Verde</SelectItem>
-                    </SelectContent>
-                  </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center space-x-2">
-                  <Switch id="stains" checked={hasStains} onCheckedChange={setHasStains} />
-                  <Label htmlFor="stains">Manchas</Label>
+          <div className="grid gap-6 py-4">
+            <div>
+                <h4 className="font-medium text-sm mb-3">Parâmetros da Piscina</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="ph">pH</Label>
+                    <Input id="ph" type="number" step="0.1" value={ph ?? ''} onChange={e => setPh(e.target.valueAsNumber)} className="col-span-2 h-8" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="chlorine">Cloro</Label>
+                    <Input id="chlorine" type="number" step="0.1" value={chlorine ?? ''} onChange={e => setChlorine(e.target.valueAsNumber)} className="col-span-2 h-8" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="alkalinity">Alcalinidade</Label>
+                    <Input id="alkalinity" type="number" value={alkalinity ?? ''} onChange={e => setAlkalinity(e.target.valueAsNumber)} className="col-span-2 h-8" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="hardness">Dureza</Label>
+                    <Input id="hardness" type="number" value={calciumHardness ?? ''} onChange={e => setCalciumHardness(e.target.valueAsNumber)} className="col-span-2 h-8" />
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Switch id="scale" checked={hasScale} onCheckedChange={setHasScale} />
-                  <Label htmlFor="scale">Incrustações</Label>
+                <div className="grid gap-2 mt-4">
+                    <Label>Qualidade da Água</Label>
+                      <Select onValueChange={(v: any) => setWaterQuality(v)} value={waterQuality}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="crystal-clear">Cristalina</SelectItem>
+                          <SelectItem value="cloudy">Turva</SelectItem>
+                          <SelectItem value="green">Verde</SelectItem>
+                        </SelectContent>
+                      </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch id="stains" checked={hasStains} onCheckedChange={setHasStains} />
+                      <Label htmlFor="stains">Manchas</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch id="scale" checked={hasScale} onCheckedChange={setHasScale} />
+                      <Label htmlFor="scale">Incrustações</Label>
+                    </div>
+                </div>
+            </div>
+
+            <div className="border-t pt-4">
+                <h4 className="font-medium text-sm mb-3">Produtos Utilizados</h4>
+                <div className="space-y-3">
+                    {productList?.map(product => (
+                        <div key={product.id} className="flex items-center justify-between">
+                            <Label htmlFor={`prod-${product.id}`} className="flex-1">
+                                {product.name} <span className="text-xs text-muted-foreground">({product.stock} em estoque)</span>
+                            </Label>
+                            <Input
+                                id={`prod-${product.id}`}
+                                type="number"
+                                min="0"
+                                max={product.stock}
+                                value={productsUsed.find(p => p.productId === product.id)?.quantity || ''}
+                                onChange={e => handleProductQuantityChange(product.id, e.target.valueAsNumber)}
+                                className="w-20 h-8"
+                                placeholder="0"
+                            />
+                        </div>
+                    ))}
                 </div>
             </div>
           </div>
         )}
+        </ScrollArea>
         <DialogFooter>
           <Button onClick={() => setIsOpen(false)} variant="outline">Cancelar</Button>
           <Button onClick={handleSave} disabled={isSaving}>

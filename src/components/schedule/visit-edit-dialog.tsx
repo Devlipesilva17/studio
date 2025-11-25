@@ -21,7 +21,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import type { Client, Pool, Visit } from '@/lib/types';
+import type { Client, Pool, Visit, Product } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { CalendarIcon, Clock, Loader2, Check } from 'lucide-react';
 import { useAuth, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -45,6 +45,10 @@ const formSchema = z.object({
   scheduledDate: z.date({ required_error: 'A data da visita é obrigatória.' }),
   time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: 'Formato de hora inválido (HH:mm).' }),
   notes: z.string().optional(),
+  productsUsed: z.array(z.object({
+    productId: z.string(),
+    quantity: z.number().min(1, "A quantidade deve ser pelo menos 1."),
+  })).optional(),
 });
 
 type VisitFormValues = z.infer<typeof formSchema>;
@@ -75,13 +79,20 @@ export function VisitEditDialog({
   const form = useForm<VisitFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      clientId: visit?.clientId || '',
-      poolId: visit?.poolId || '',
-      scheduledDate: visit ? new Date(visit.scheduledDate) : new Date(),
-      time: visit?.time || '09:00',
-      notes: visit?.notes || '',
+      clientId: '',
+      poolId: '',
+      scheduledDate: new Date(),
+      time: '09:00',
+      notes: '',
+      productsUsed: [],
     },
   });
+  
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'products'));
+  }, [firestore]);
+  const { data: productList, isLoading: areProductsLoading } = useCollection<Product>(productsQuery);
 
   const poolsQuery = useMemoFirebase(() => {
     if (!auth?.currentUser || !firestore || !selectedClientId) return null;
@@ -92,24 +103,28 @@ export function VisitEditDialog({
 
 
   React.useEffect(() => {
-    if (visit) {
-      form.reset({
-        clientId: visit.clientId,
-        poolId: visit.poolId,
-        scheduledDate: new Date(visit.scheduledDate),
-        time: visit.time,
-        notes: visit.notes || '',
-      });
-      setSelectedClientId(visit.clientId);
-    } else {
-      form.reset({
-        clientId: '',
-        poolId: '',
-        scheduledDate: new Date(),
-        time: '09:00',
-        notes: '',
-      });
-      setSelectedClientId(undefined);
+    if (open) {
+      if (visit) {
+        form.reset({
+          clientId: visit.clientId,
+          poolId: visit.poolId,
+          scheduledDate: new Date(visit.scheduledDate),
+          time: visit.time,
+          notes: visit.notes || '',
+          productsUsed: visit.productsUsed || [],
+        });
+        setSelectedClientId(visit.clientId);
+      } else {
+        form.reset({
+          clientId: '',
+          poolId: '',
+          scheduledDate: new Date(),
+          time: '09:00',
+          notes: '',
+          productsUsed: [],
+        });
+        setSelectedClientId(undefined);
+      }
     }
   }, [visit, form, open]);
 
@@ -119,6 +134,27 @@ export function VisitEditDialog({
     form.setValue('poolId', ''); // Reset pool selection
     setIsClientPopoverOpen(false);
   }
+
+  const handleProductQuantityChange = (productId: string, quantity: number) => {
+    const currentProducts = form.getValues('productsUsed') || [];
+    const existingProductIndex = currentProducts.findIndex(p => p.productId === productId);
+
+    if (quantity > 0) {
+      if (existingProductIndex > -1) {
+        // Update quantity
+        currentProducts[existingProductIndex].quantity = quantity;
+        form.setValue('productsUsed', [...currentProducts]);
+      } else {
+        // Add new product
+        form.setValue('productsUsed', [...currentProducts, { productId, quantity }]);
+      }
+    } else {
+      // Remove product if quantity is 0 or less
+      if (existingProductIndex > -1) {
+        form.setValue('productsUsed', currentProducts.filter(p => p.productId !== productId));
+      }
+    }
+  };
 
   const onSubmit = async (values: VisitFormValues) => {
     if (!auth?.currentUser || !firestore) {
@@ -133,7 +169,7 @@ export function VisitEditDialog({
     setIsSaving(true);
 
     try {
-      const { clientId, poolId, scheduledDate, time, notes } = values;
+      const { clientId, poolId, scheduledDate, time, notes, productsUsed } = values;
       const clientName = clients.find(c => c.id === clientId)?.name || 'Cliente desconhecido';
 
       const visitData = {
@@ -144,8 +180,8 @@ export function VisitEditDialog({
         scheduledDate: scheduledDate.toISOString(),
         time,
         notes: notes || '',
+        productsUsed: productsUsed || [],
         status: 'pending' as const,
-        productsUsed: [],
         updatedAt: serverTimestamp(),
       };
 
@@ -220,10 +256,12 @@ export function VisitEditDialog({
 
   const selectedClientName = clients.find(c => c.id === selectedClientId)?.name || "Selecione um cliente";
 
+  const watchedProductsUsed = form.watch('productsUsed') || [];
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{visit ? 'Editar Agendamento' : 'Novo Agendamento'}</DialogTitle>
           <DialogDescription>
@@ -384,6 +422,30 @@ export function VisitEditDialog({
                     </FormItem>
                   )}
                 />
+                
+                <div className="border-t pt-4">
+                  <FormLabel>Produtos a serem Utilizados</FormLabel>
+                   <div className="space-y-3 mt-2">
+                        {areProductsLoading ? <p>Carregando produtos...</p> : productList?.map(product => (
+                            <div key={product.id} className="flex items-center justify-between">
+                                <Label htmlFor={`prod-dialog-${product.id}`} className="flex-1">
+                                    {product.name} <span className="text-xs text-muted-foreground">({product.stock} em estoque)</span>
+                                </Label>
+                                <Input
+                                    id={`prod-dialog-${product.id}`}
+                                    type="number"
+                                    min="0"
+                                    max={product.stock}
+                                    value={watchedProductsUsed.find(p => p.productId === product.id)?.quantity || ''}
+                                    onChange={e => handleProductQuantityChange(product.id, e.target.valueAsNumber)}
+                                    className="w-20 h-8"
+                                    placeholder="0"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
 
                 <DialogFooter className="pt-4">
                   <DialogClose asChild>
