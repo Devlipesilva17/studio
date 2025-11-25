@@ -98,7 +98,10 @@ export default function SettingsPage() {
 
     React.useEffect(() => {
         const handleAuthMessage = (event: MessageEvent) => {
-            if (event.origin !== window.location.origin && !event.origin.includes('cloudworkstations.dev')) {
+            // Do not trust event.origin for security checks.
+            // PostMessage is designed for cross-origin communication.
+            // Instead, we should validate the data's content or structure.
+            if (event.source !== window.opener) {
                 return;
             }
 

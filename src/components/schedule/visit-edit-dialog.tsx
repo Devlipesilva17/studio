@@ -36,6 +36,7 @@ import { ptBR } from 'date-fns/locale';
 import { Calendar } from '../ui/calendar';
 import { Textarea } from '../ui/textarea';
 import { Input } from '../ui/input';
+import { syncVisitToGoogleCalendar } from '@/ai/flows/google-calendar-sync';
 
 
 const formSchema = z.object({
@@ -150,9 +151,12 @@ export function VisitEditDialog({
 
       const collectionRef = collection(firestore, `users/${auth.currentUser.uid}/clients/${clientId}/schedules`);
 
+      let visitId: string;
+
       if (visit?.id) {
         // Update existing visit
-        const visitRef = doc(collectionRef, visit.id);
+        visitId = visit.id;
+        const visitRef = doc(collectionRef, visitId);
         await setDoc(visitRef, visitData, { merge: true });
         toast({
           title: 'Agendamento Atualizado!',
@@ -160,15 +164,31 @@ export function VisitEditDialog({
         });
       } else {
         // Create new visit
-        await addDoc(collectionRef, {
+        const newDocRef = await addDoc(collectionRef, {
           ...visitData,
           createdAt: serverTimestamp(),
         });
+        visitId = newDocRef.id;
         toast({
           title: 'Visita Agendada!',
           description: `Nova visita para ${clientName} em ${format(scheduledDate, 'PPP', { locale: ptBR })}.`,
         });
       }
+
+      // After saving to Firestore, sync with Google Calendar
+      await syncVisitToGoogleCalendar({
+          userId: auth.currentUser.uid,
+          visitId: visitId,
+          summary: `Limpeza de Piscina: ${clientName}`,
+          description: `Visita agendada para o cliente ${clientName}. Observações: ${notes || 'N/A'}`,
+          startTime: `${scheduledDate.toISOString().split('T')[0]}T${time}:00`,
+          endTime: `${scheduledDate.toISOString().split('T')[0]}T${(parseInt(time.split(':')[0]) + 1).toString().padStart(2, '0')}:${time.split(':')[1]}:00`, // Assume 1 hour duration
+      });
+
+      toast({
+          title: 'Sincronizado!',
+          description: 'A visita foi sincronizada com seu Google Agenda.',
+      });
 
       onOpenChange(false);
     } catch (error) {
