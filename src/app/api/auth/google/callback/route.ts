@@ -3,7 +3,6 @@ import { NextRequest } from 'next/server';
 import { getOAuth2Client } from '@/firebase/server';
 import { getFirestore } from 'firebase-admin/firestore';
 import { initializeApp, getApps, App } from 'firebase-admin/app';
-import { firebaseConfig } from '@/firebase/config';
 
 // Initialize Firebase Admin SDK if not already initialized
 function getFirebaseAdminApp(): App {
@@ -20,24 +19,23 @@ function getFirebaseAdminApp(): App {
 const createPopupCloserScript = (data: { type: string; origin: string;[key: string]: any }) => `
   <script>
     if (window.opener) {
+      // Use the specified origin to ensure the message is sent to the correct domain
       window.opener.postMessage(${JSON.stringify(data)}, "${data.origin}");
     }
     window.close();
   </script>
 `;
 
-/**
- * This is the callback route that Google redirects to after user consent.
- * It exchanges the authorization code for tokens and saves them.
- */
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state'); // The user's UID
   const error = searchParams.get('error');
 
-  // The opener origin should be the app's main auth domain, not the dynamic one.
-  const openerOrigin = `https://${firebaseConfig.authDomain}`;
+  // Determine the opener's origin. For Cloud Workstations, we trust the host.
+  // For production, you might want a more secure way to determine this.
+  const openerOrigin = req.headers.get('origin') || `https://${req.headers.get('host')}`;
 
   if (error) {
     return new Response(
@@ -54,8 +52,12 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // The getOAuth2Client now creates a stable redirect URI internally.
-    const oauth2Client = getOAuth2Client();
+    const host = req.headers.get('host')!;
+    const protocol = host.startsWith('localhost') ? 'http' : 'https';
+    const redirectUri = `${protocol}://${host}/api/auth/google/callback`;
+
+    const oauth2Client = getOAuth2Client(redirectUri);
+
     const { tokens } = await oauth2Client.getToken(code);
 
     if (!tokens.access_token) {
