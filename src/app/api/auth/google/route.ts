@@ -10,13 +10,8 @@ export async function GET(req: NextRequest) {
     return new NextResponse('State parameter is missing.', { status: 400 });
   }
 
-  // Get the host from the request headers to build the dynamic redirect URI.
-  const host = req.headers.get('host');
-  if (!host) {
-    return new NextResponse('Host header is missing.', { status: 400 });
-  }
-
-  const oauth2Client = getOAuth2Client(host);
+  // The getOAuth2Client now creates a stable redirect URI internally
+  const oauth2Client = getOAuth2Client();
 
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline', // Necessary to get a refresh token
