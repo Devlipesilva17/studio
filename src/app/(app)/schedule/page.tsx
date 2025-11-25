@@ -43,6 +43,7 @@ import {
   deleteDoc,
   serverTimestamp,
   collectionGroup,
+  where,
 } from 'firebase/firestore';
 import { VisitEditDialog } from '@/components/schedule/visit-edit-dialog';
 import { addDays, startOfWeek } from 'date-fns';
@@ -240,11 +241,10 @@ export default function SchedulePage() {
   
   const schedulesQuery = useMemoFirebase(() => {
       if (!user || !firestore) return null;
-      // Use a collection group query to fetch all schedules for the user in one go.
+      // Use a collection group query to fetch all schedules for the user.
       // This is much more efficient than fetching clients and then schedules for each client.
-      // Note: This query requires a composite index in Firestore.
-      // The error message in the browser console will provide a link to create it.
-      return query(collectionGroup(firestore, 'schedules'));
+      // This query requires a composite index in Firestore. The error in the browser console will provide a link to create it.
+      return query(collectionGroup(firestore, 'schedules'), where('userId', '==', user.uid));
   }, [user, firestore]);
   
   const { data: visits, isLoading: areSchedulesLoading } = useCollection<Visit>(schedulesQuery);

@@ -150,10 +150,9 @@ service cloud.firestore {
     // This rule enables the collectionGroup query for 'schedules' in the app.
     // It allows a user to list all schedules that belong to them across all their clients.
     match /users/{userId}/clients/{clientId}/schedules/{scheduleId} {
-       function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-      allow read, write: if isOwner(userId);
+      // The user must be the owner of the parent user document.
+      // The document being read/written must have a 'userId' field that matches the authenticated user's UID.
+      allow read, write: if request.auth.uid == userId && resource.data.userId == request.auth.uid;
     }
 
     /**

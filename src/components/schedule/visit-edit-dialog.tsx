@@ -136,6 +136,7 @@ export function VisitEditDialog({
       const clientName = clients.find(c => c.id === clientId)?.name || 'Cliente desconhecido';
 
       const visitData = {
+        userId: auth.currentUser.uid, // Add userId for collectionGroup query
         clientId,
         poolId,
         clientName,

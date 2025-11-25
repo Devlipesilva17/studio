@@ -41,16 +41,9 @@ export type Pool = {
   lastTreatment?: string;
 };
 
-export type Product = {
-  id: string;
-  name: string;
-  description: string;
-  cost: number;
-  stock: number;
-};
-
 export type Visit = {
   id: string;
+  userId: string; // Added for collectionGroup queries
   poolId: string;
   clientId: string;
   clientName: string;
@@ -71,4 +64,18 @@ export type Payment = {
   status: 'paid' | 'pending';
 };
 
-    
+export type User = {
+    id: string;
+    email: string;
+    companyName?: string;
+    companyLogo?: string;
+    language?: string;
+    theme?: string;
+    notificationPrefs?: {
+        pendingClients?: boolean;
+        visitReminders?: boolean;
+    };
+    googleAccessToken?: string;
+    googleRefreshToken?: string;
+    googleTokenExpiry?: number;
+};
