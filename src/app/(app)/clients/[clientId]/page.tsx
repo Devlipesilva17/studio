@@ -95,12 +95,12 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
 
 
   const clientRef = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
+    if (!user || !firestore || !clientId) return null;
     return doc(firestore, `users/${user.uid}/clients`, clientId);
   }, [firestore, user, clientId]);
 
   const poolsQuery = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
+    if (!user || !firestore || !clientId) return null;
     return query(collection(firestore, `users/${user.uid}/clients/${clientId}/pools`));
   }, [firestore, user, clientId]);
 
@@ -357,7 +357,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
     );
   }
 
-  if (!client) {
+  if (!client && !isClientLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center">
         <CardTitle>Cliente não encontrado</CardTitle>
@@ -386,12 +386,12 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
                     <Link href="/clients"><ArrowLeft className="h-4 w-4" /></Link>
                 </Button>
                 <Avatar className="h-16 w-16">
-                  <AvatarImage src={client.avatarUrl} alt={client.name} />
-                  <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={client?.avatarUrl} alt={client?.name} />
+                  <AvatarFallback>{client?.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <CardTitle className="text-3xl font-headline">{client.name}</CardTitle>
-                  <CardDescription>Cliente desde {client.startDate ? format(new Date(client.startDate), "dd/MM/yyyy") : 'Data não definida'}</CardDescription>
+                  <CardTitle className="text-3xl font-headline">{client?.name}</CardTitle>
+                  <CardDescription>Cliente desde {client?.startDate ? format(new Date(client.startDate), "dd/MM/yyyy") : 'Data não definida'}</CardDescription>
                 </div>
             </div>
             <div className="flex gap-2">
