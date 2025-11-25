@@ -11,7 +11,10 @@ export async function GET(req: NextRequest) {
   }
 
   // The getOAuth2Client now creates a stable redirect URI internally
-  const oauth2Client = getOAuth2Client();
+  const host = req.headers.get('host')!;
+  const protocol = host.startsWith('localhost') ? 'http' : 'https';
+  const redirectUri = `${protocol}://${host}/api/auth/google/callback`;
+  const oauth2Client = getOAuth2Client(redirectUri);
 
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline', // Necessary to get a refresh token
