@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -157,7 +158,7 @@ export default function LoginPage() {
           <div className="grid gap-2 text-center">
             <div className="flex justify-center items-center gap-2 mb-4">
               <PoolIcon className="w-8 h-8 text-primary" />
-              <h1 className="text-3xl font-bold font-headline">PoolCare Pro</h1>
+              <h1 className="text-3xl font-bold font-headline">Piscinei App</h1>
             </div>
             <p className="text-balance text-muted-foreground">
               {isSignUp

@@ -37,7 +37,7 @@ export type Pool = {
   filterCapacity?: number;
   updatedAt?: any; // Firestore ServerTimestamp
   // Deprecated fields, kept for compatibility, but should be calculated.
-  size?: number; 
+  size: number; 
   lastTreatment?: string;
 };
 

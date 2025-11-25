@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -76,8 +77,8 @@ export function RecommendationForm({ clients, pools }: RecommendationFormProps) 
         setRecommendations(null);
 
         const input = {
-            poolSize: selectedPool.size,
-            poolType: selectedPool.type,
+            poolSize: selectedPool.volume || selectedPool.size,
+            poolType: selectedPool.material || 'fiber',
             lastTreatment: values.lastTreatment,
             algaeLevel: values.algaeLevel,
             pHLevel: values.pHLevel,
@@ -136,7 +137,7 @@ export function RecommendationForm({ clients, pools }: RecommendationFormProps) 
                                         </FormControl>
                                         <SelectContent>
                                             {clientPools.map(pool => (
-                                                <SelectItem key={pool.id} value={pool.id}>{pool.name} ({pool.size} gal)</SelectItem>
+                                                <SelectItem key={pool.id} value={pool.id}>{pool.name} ({pool.volume || pool.size} L)</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>

@@ -1,3 +1,4 @@
+
 // src/app/(app)/layout.tsx
 'use client';
 
@@ -79,7 +80,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               className="flex items-center gap-2 font-semibold font-headline"
             >
               <PoolIcon className="h-6 w-6 text-primary" />
-              <span>PoolCare Pro</span>
+              <span>Piscinei App</span>
             </Link>
             <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
               <Bell className="h-4 w-4" />
@@ -132,7 +133,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     className="flex items-center gap-2 text-lg font-semibold mb-4"
                   >
                     <PoolIcon className="h-6 w-6 text-primary" />
-                    <span>PoolCare Pro</span>
+                    <span>Piscinei App</span>
                   </Link>
                 </SheetClose>
                 {navItems.map((item) => (
