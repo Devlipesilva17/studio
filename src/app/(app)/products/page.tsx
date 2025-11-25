@@ -150,6 +150,7 @@ export default function ProductsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="hidden md:table-cell">
                       Preço
                     </TableHead>
@@ -164,7 +165,7 @@ export default function ProductsPage() {
                 <TableBody>
                   {isLoading && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center">
+                      <TableCell colSpan={5} className="text-center">
                         Carregando...
                       </TableCell>
                     </TableRow>
@@ -180,6 +181,9 @@ export default function ProductsPage() {
                             {product.description && (
                               <div className="text-xs text-muted-foreground">{product.description}</div>
                             )}
+                          </TableCell>
+                           <TableCell>
+                            <Badge variant={stockStatus.variant}>{stockStatus.text}</Badge>
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
                             R$ {product.cost.toFixed(2).replace('.', ',')}
@@ -233,7 +237,7 @@ export default function ProductsPage() {
                     })}
                    {!isLoading && (!filteredProducts || filteredProducts.length === 0) && (
                     <TableRow>
-                        <TableCell colSpan={4} className="text-center">Nenhum produto encontrado. Adicione um novo produto.</TableCell>
+                        <TableCell colSpan={5} className="text-center">Nenhum produto encontrado. Adicione um novo produto.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
