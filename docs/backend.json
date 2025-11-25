@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -209,6 +210,10 @@
         "cost": {
           "type": "number",
           "description": "Cost of the product."
+        },
+        "stock": {
+          "type": "number",
+          "description": "Available stock of the product."
         }
       },
       "required": [

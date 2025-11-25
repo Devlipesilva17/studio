@@ -64,6 +64,14 @@ export type Payment = {
   status: 'paid' | 'pending';
 };
 
+export type Product = {
+  id: string;
+  name: string;
+  description?: string;
+  cost: number;
+  stock: number;
+};
+
 export type User = {
     id: string;
     email: string;
@@ -79,3 +87,4 @@ export type User = {
     googleRefreshToken?: string;
     googleTokenExpiry?: number;
 };
+

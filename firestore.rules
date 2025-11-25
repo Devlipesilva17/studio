@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Firestore Security Rules for PoolCare Pro.
  *
@@ -142,9 +143,9 @@ service cloud.firestore {
       allow get: if true;
       allow list: if true;
 
-      allow create: if false; // TODO: Add admin validation once the schema is updated with an admin field.
-      allow update: if false; // TODO: Add admin validation once the schema is updated with an admin field.
-      allow delete: if false; // TODO: Add admin validation once the schema is updated with an admin field.
+      allow create: if request.auth != null; // TODO: Add admin validation once the schema is updated with an admin field.
+      allow update: if request.auth != null; // TODO: Add admin validation once the schema is updated with an admin field.
+      allow delete: if request.auth != null; // TODO: Add admin validation once the schema is updated with an admin field.
     }
     
     /**
