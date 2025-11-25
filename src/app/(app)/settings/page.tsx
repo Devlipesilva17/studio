@@ -1,7 +1,6 @@
-// src/app/(app)/settings/page.tsx
+
 'use client';
 import * as React from 'react';
-import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -42,7 +41,7 @@ export default function SettingsPage() {
         return doc(firestore, `users/${user.uid}`);
     }, [user, firestore]);
     
-    const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userRef);
+    const { data: userProfile, isLoading: isProfileLoading, refetch } = useDoc<UserProfile>(userRef);
 
     const [isSaving, setIsSaving] = React.useState(false);
     const [logoPreview, setLogoPreview] = React.useState<string | null>(null);
@@ -74,6 +73,34 @@ export default function SettingsPage() {
             }
         }
     }, [userProfile, form]);
+    
+    React.useEffect(() => {
+        const handleAuthMessage = (event: MessageEvent) => {
+            if (event.origin !== window.location.origin) {
+                return;
+            }
+
+            if (event.data.type === 'google-auth-success') {
+                toast({
+                    title: 'Sincronização Ativada!',
+                    description: 'Sua conta Google foi conectada com sucesso.',
+                });
+                refetch();
+            } else if (event.data.type === 'google-auth-error') {
+                toast({
+                    variant: 'destructive',
+                    title: 'Erro na Conexão',
+                    description: event.data.message || 'Não foi possível conectar sua conta Google.',
+                });
+            }
+        };
+
+        window.addEventListener('message', handleAuthMessage);
+        return () => {
+            window.removeEventListener('message', handleAuthMessage);
+        };
+    }, [refetch, toast]);
+
 
     const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -109,13 +136,22 @@ export default function SettingsPage() {
     };
 
     const handleGoogleConnect = () => {
-        const url = 'https://accounts.google.com/v3/signin/identifier?dsh=S1611624178:1665765818620318&continue=https://calendar.google.com/calendar/r&followup=https://calendar.google.com/calendar/r&osid=1&passive=1209600&service=cl&flowName=GlifWebSignIn&flowEntry=ServiceLogin&ifkv=AQDHYWrL2lk0_Bcr1n1Y-f-i1sNZRKJK8CNisliX9rpozkqKhY2Jby8gsVZ_wDz_oHqiWmN6uZ6s6g';
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Erro', description: 'Você precisa estar logado para conectar sua conta.' });
+            return;
+        }
+
         const width = 600;
         const height = 700;
         const left = window.screen.width / 2 - width / 2;
         const top = window.screen.height / 2 - height / 2;
+
+        // The state parameter is a security measure to prevent CSRF attacks.
+        const state = user.uid;
+        const authUrl = `/api/auth/google?state=${state}`;
+
         window.open(
-            url,
+            authUrl,
             'google-auth',
             `width=${width},height=${height},left=${left},top=${top}`
         );
@@ -231,7 +267,11 @@ export default function SettingsPage() {
 
                                 <div className="space-y-4">
                                     <h3 className="font-medium">Sincronização com Google Agenda</h3>
-                                    {isGoogleConnected ? (
+                                    {isProfileLoading ? (
+                                        <div className="flex items-center justify-center rounded-lg border p-6">
+                                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                        </div>
+                                    ) : isGoogleConnected ? (
                                         <>
                                             <div className="flex items-center justify-between rounded-lg border p-4 bg-secondary/30">
                                                 <div className="space-y-0.5">
@@ -240,7 +280,7 @@ export default function SettingsPage() {
                                                         Seus agendamentos estão sendo sincronizados com o Google Agenda.
                                                     </p>
                                                 </div>
-                                                <Button variant="destructive">Desconectar</Button>
+                                                <Button variant="destructive" disabled>Desconectar</Button>
                                             </div>
                                             <div className="space-y-2 pl-4 border-l-2 ml-4">
                                                 <p className="text-sm font-medium">Filtrar sincronização por:</p>
@@ -278,3 +318,5 @@ export default function SettingsPage() {
         </div>
     );
 }
+
+    
