@@ -153,7 +153,7 @@ export default function ProductsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
                     <TableHead className="hidden md:table-cell">
                       Preço
                     </TableHead>
@@ -185,7 +185,7 @@ export default function ProductsPage() {
                               <div className="text-xs text-muted-foreground">{product.description}</div>
                             )}
                           </TableCell>
-                           <TableCell>
+                           <TableCell className="text-center">
                             <Badge variant={stockStatus.variant}>{stockStatus.text}</Badge>
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
