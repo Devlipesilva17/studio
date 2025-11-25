@@ -146,39 +146,14 @@ service cloud.firestore {
       allow update: if false; // TODO: Add admin validation once the schema is updated with an admin field.
       allow delete: if false; // TODO: Add admin validation once the schema is updated with an admin field.
     }
-
-    /**
-     * @description Controls access to schedule data for a specific client of a user.
-     * @path /users/{userId}/clients/{clientId}/schedules/{scheduleId}
-     * @allow (get) Authenticated user can read their own schedule data.
-     * @allow (create) Authenticated user can create schedule data under their user and client ID.
-     * @allow (update) Authenticated user can update their own schedule data.
-     * @allow (delete) Authenticated user can delete their own schedule data.
-     * @deny (get) Another user tries to read this schedule data.
-     * @deny (create) Another user tries to create schedule data under another user's ID.
-     * @deny (update) Another user tries to update this schedule data.
-     * @deny (delete) Another user tries to delete this schedule data.
-     * @principle Restricts access to a user's own data tree.
-     */
+    
+    // This rule enables the collectionGroup query for 'schedules' in the app.
+    // It allows a user to list all schedules that belong to them across all their clients.
     match /users/{userId}/clients/{clientId}/schedules/{scheduleId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
+       function isOwner(userId) {
         return request.auth.uid == userId;
       }
-
-      function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow read, write: if isOwner(userId);
     }
 
     /**

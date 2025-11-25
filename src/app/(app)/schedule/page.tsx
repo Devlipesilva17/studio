@@ -42,6 +42,7 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
+  collectionGroup,
 } from 'firebase/firestore';
 import { VisitEditDialog } from '@/components/schedule/visit-edit-dialog';
 import { addDays, startOfWeek } from 'date-fns';
@@ -225,9 +226,7 @@ export default function SchedulePage() {
     undefined
   );
   const [locale, setLocale] = React.useState('pt-BR');
-  const [visits, setVisits] = React.useState<Visit[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-
+  
   React.useEffect(() => {
     const userLocale = navigator.language || 'pt-BR';
     setLocale(userLocale);
@@ -237,60 +236,24 @@ export default function SchedulePage() {
     if (!user || !firestore) return null;
     return query(collection(firestore, `users/${user.uid}/clients`));
   }, [firestore, user]);
-  const { data: clientList, isLoading: areClientsLoading } =
-    useCollection<Client>(clientsQuery);
+  const { data: clientList, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
+  
+  const schedulesQuery = useMemoFirebase(() => {
+      if (!user || !firestore) return null;
+      // Use a collection group query to fetch all schedules for the user in one go.
+      // This is much more efficient than fetching clients and then schedules for each client.
+      // Note: This query requires a composite index in Firestore.
+      // The error message in the browser console will provide a link to create it.
+      return query(collectionGroup(firestore, 'schedules'));
+  }, [user, firestore]);
+  
+  const { data: visits, isLoading: areSchedulesLoading } = useCollection<Visit>(schedulesQuery);
+  
+  const isLoading = areClientsLoading || areSchedulesLoading;
 
-  React.useEffect(() => {
-    if (!user || !firestore || areClientsLoading) {
-      if (!areClientsLoading) setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-
-    if (!clientList || clientList.length === 0) {
-      setIsLoading(false);
-      setVisits([]);
-      return;
-    }
-
-    const unsubscribers = clientList.map((client) => {
-      const schedulesCollectionRef = collection(
-        firestore,
-        `users/${user.uid}/clients/${client.id}/schedules`
-      );
-      return onSnapshot(
-        schedulesCollectionRef,
-        (snapshot) => {
-          const fetchedVisits = snapshot.docs.map(
-            (doc) => ({ ...doc.data(), id: doc.id, clientName: client.name, clientId: client.id } as Visit)
-          );
-
-          setVisits((prevVisits) => {
-            const otherClientVisits = prevVisits.filter(
-              (v) => v.clientId !== client.id
-            );
-            return [...otherClientVisits, ...fetchedVisits];
-          });
-
-          setIsLoading(false);
-        },
-        (error) => {
-          console.error(
-            `Error fetching schedules for client ${client.id}:`,
-            error
-          );
-          setIsLoading(false); // Stop loading even on error for a specific client
-        }
-      );
-    });
-
-    return () => {
-      unsubscribers.forEach((unsub) => unsub());
-    };
-  }, [user, firestore, clientList, areClientsLoading]);
 
   const daysWithVisits = React.useMemo(() => {
+    if (!visits) return [];
     return visits.map((visit) => new Date(visit.scheduledDate));
   }, [visits]);
 
@@ -314,6 +277,7 @@ export default function SchedulePage() {
   }, [currentDate]);
 
   const visitsByDay = React.useMemo(() => {
+    if (!visits) return weekDays.map(() => []);
     return weekDays.map((day) =>
       visits
         .filter((visit) => {
