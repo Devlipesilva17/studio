@@ -50,6 +50,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { cn } from '@/lib/utils';
 
 export default function ProductsPage() {
   const { user } = useUser();
@@ -96,9 +97,9 @@ export default function ProductsPage() {
   }
 
   const getStockStatus = (stock: number) => {
-    if (stock > 10) return { text: 'Em Estoque', variant: 'default' as const, status: 'in-stock' };
-    if (stock > 0) return { text: 'Estoque Baixo', variant: 'secondary' as const, status: 'low-stock' };
-    return { text: 'Fora de Estoque', variant: 'destructive' as const, status: 'out-of-stock' };
+    if (stock > 10) return { text: 'Em Estoque', variant: 'default' as const, status: 'in-stock', color: 'text-green-600' };
+    if (stock > 0) return { text: 'Estoque Baixo', variant: 'secondary' as const, status: 'low-stock', color: 'text-amber-600' };
+    return { text: 'Fora de Estoque', variant: 'destructive' as const, status: 'out-of-stock', color: 'text-red-600' };
   };
   
   const filteredProducts = React.useMemo(() => {
@@ -119,7 +120,6 @@ export default function ProductsPage() {
           <TabsList>
             <TabsTrigger value="all">Todos</TabsTrigger>
             <TabsTrigger value="in-stock">Em Estoque</TabsTrigger>
-            <TabsTrigger value="low-stock">Estoque Baixo</TabsTrigger>
             <TabsTrigger value="out-of-stock">Fora de Estoque</TabsTrigger>
           </TabsList>
           <div className="ml-auto flex items-center gap-2">
@@ -150,11 +150,10 @@ export default function ProductsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Status</TableHead>
                     <TableHead className="hidden md:table-cell">
                       Preço
                     </TableHead>
-                    <TableHead className="hidden md:table-cell">
+                    <TableHead className="hidden md:table-cell text-right">
                       Estoque
                     </TableHead>
                     <TableHead>
@@ -165,7 +164,7 @@ export default function ProductsPage() {
                 <TableBody>
                   {isLoading && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center">
+                      <TableCell colSpan={4} className="text-center">
                         Carregando...
                       </TableCell>
                     </TableRow>
@@ -182,15 +181,10 @@ export default function ProductsPage() {
                               <div className="text-xs text-muted-foreground">{product.description}</div>
                             )}
                           </TableCell>
-                          <TableCell>
-                            <Badge variant={stockStatus.variant}>
-                              {stockStatus.text}
-                            </Badge>
-                          </TableCell>
                           <TableCell className="hidden md:table-cell">
                             R$ {product.cost.toFixed(2).replace('.', ',')}
                           </TableCell>
-                          <TableCell className="hidden md:table-cell">
+                          <TableCell className={cn("hidden md:table-cell text-right font-bold", stockStatus.color)}>
                             {product.stock}
                           </TableCell>
                           <TableCell>
@@ -239,7 +233,7 @@ export default function ProductsPage() {
                     })}
                    {!isLoading && (!filteredProducts || filteredProducts.length === 0) && (
                     <TableRow>
-                        <TableCell colSpan={5} className="text-center">Nenhum produto encontrado. Adicione um novo produto.</TableCell>
+                        <TableCell colSpan={4} className="text-center">Nenhum produto encontrado. Adicione um novo produto.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -248,7 +242,7 @@ export default function ProductsPage() {
             <CardFooter>
               <div className="text-xs text-muted-foreground">
                 Mostrando <strong>1-{filteredProducts?.length ?? 0}</strong> de{' '}
-                <strong>{filteredProducts?.length ?? 0}</strong> produtos
+                <strong>{productList?.length ?? 0}</strong> produtos
               </div>
             </CardFooter>
           </Card>
