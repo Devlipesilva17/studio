@@ -177,7 +177,10 @@ export default function ProductsPage() {
                       return (
                         <TableRow key={product.id}>
                           <TableCell className="font-medium">
-                            {product.name}
+                            <div className="font-medium">{product.name}</div>
+                            {product.description && (
+                              <div className="text-xs text-muted-foreground">{product.description}</div>
+                            )}
                           </TableCell>
                           <TableCell>
                             <Badge variant={stockStatus.variant}>
