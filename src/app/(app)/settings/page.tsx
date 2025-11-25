@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from '@/components/ui/separator';
 import { GoogleCalendarIcon } from '@/components/icons';
-import { useAuth, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import type { User as UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -32,7 +32,7 @@ const settingsSchema = z.object({
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 export default function SettingsPage() {
-    const { user } = useAuth();
+    const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
     
@@ -63,7 +63,7 @@ export default function SettingsPage() {
             form.reset({
                 companyName: userProfile.companyName || '',
                 language: userProfile.language || 'pt-BR',
-                notifications: {
+                notificationPrefs: {
                     pendingClients: userProfile.notificationPrefs?.pendingClients || false,
                     visitReminders: userProfile.notificationPrefs?.visitReminders || false,
                 },
@@ -158,6 +158,7 @@ export default function SettingsPage() {
     };
 
     const isGoogleConnected = userProfile?.googleRefreshToken;
+    const isLoading = isProfileLoading || isUserLoading;
 
     return (
         <div className="flex flex-col gap-6">
@@ -267,7 +268,7 @@ export default function SettingsPage() {
 
                                 <div className="space-y-4">
                                     <h3 className="font-medium">Sincronização com Google Agenda</h3>
-                                    {isProfileLoading ? (
+                                    {isLoading ? (
                                         <div className="flex items-center justify-center rounded-lg border p-6">
                                             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                                         </div>
@@ -297,7 +298,7 @@ export default function SettingsPage() {
                                                     Sincronize automaticamente seus agendamentos com o Google Agenda para nunca mais perder uma visita.
                                                 </p>
                                             </div>
-                                            <Button variant="outline" onClick={handleGoogleConnect} type="button">
+                                            <Button variant="outline" onClick={handleGoogleConnect} type="button" disabled={isLoading}>
                                                 <GoogleCalendarIcon className="mr-2 h-4 w-4" />
                                                 Conectar com Google Agenda
                                             </Button>
@@ -318,4 +319,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-
