@@ -37,6 +37,7 @@ import { Calendar } from '../ui/calendar';
 import { Textarea } from '../ui/textarea';
 import { Input } from '../ui/input';
 import { syncVisitToGoogleCalendar } from '@/ai/flows/google-calendar-sync';
+import { Label } from '../ui/label';
 
 
 const formSchema = z.object({
