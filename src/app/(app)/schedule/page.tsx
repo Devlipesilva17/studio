@@ -46,7 +46,7 @@ import {
   collectionGroup,
   where,
 } from 'firebase/firestore';
-import { addDays, startOfWeek } from 'date-fns';
+import { addDays, startOfWeek, format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
@@ -111,20 +111,15 @@ export default function SchedulePage() {
     setLocale(userLocale);
   }, []);
   
-  const schedulesQuery = useMemoFirebase(() => {
-    if (!user?.uid || !firestore) {
-      return null;
-    }
+  const visitsQuery = useMemoFirebase(() => {
+    if (!user?.uid || !firestore) return null;
     return query(
       collectionGroup(firestore, 'schedules'),
       where('userId', '==', user.uid)
     );
-  }, [user?.uid, firestore]);
-  
-  const { data: visits, isLoading: areSchedulesLoading } = useCollection<Visit>(schedulesQuery);
-  
-  const isLoading = areSchedulesLoading;
+  }, [firestore, user?.uid]);
 
+  const { data: visits, isLoading: isVisitsLoading } = useCollection<Visit>(visitsQuery);
 
   const daysWithVisits = React.useMemo(() => {
     if (!visits) return [];
@@ -370,7 +365,7 @@ export default function SchedulePage() {
           </div>
         </div>
 
-        {isLoading ? (
+        {isVisitsLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-7 flex-1 gap-2 items-start">
             {Array.from({ length: 7 }).map((_, index) => (
               <div key={index} className="flex flex-col gap-2">

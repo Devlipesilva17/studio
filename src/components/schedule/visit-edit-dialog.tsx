@@ -259,11 +259,11 @@ export function VisitEditDialog({
         updatedAt: serverTimestamp(),
       };
 
-      const collectionRef = collection(
-        firestore,
-        `users/${auth.currentUser.uid}/clients/${clientId}/schedules`
-      );
-
+      // Linha 44 CORRIGIDA:
+const collectionRef = collection(
+  firestore,
+  `users/${auth.currentUser.uid}/clients/${clientId}/visits`
+);
       let visitId: string;
 
       if (visit?.id) {
