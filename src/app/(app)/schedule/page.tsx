@@ -33,7 +33,7 @@ import {
   useCollection,
   useDoc,
   useFirebase,
-  useMemoFirebase
+  useMemoFirebase,
 } from '@/firebase';
 import {
   collection,
@@ -89,7 +89,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 const QuickEditDialog = React.lazy(() => import('@/components/schedule/quick-edit-dialog').then(module => ({ default: module.QuickEditDialog })));
 const VisitEditDialog = React.lazy(() => import('@/components/schedule/visit-edit-dialog').then(module => ({ default: module.VisitEditDialog })));
 
-
 export default function SchedulePage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -105,21 +104,28 @@ export default function SchedulePage() {
     undefined
   );
   const [locale, setLocale] = React.useState('pt-BR');
-  
+
   React.useEffect(() => {
     const userLocale = navigator.language || 'pt-BR';
     setLocale(userLocale);
   }, []);
-  
-  const visitsQuery = useMemoFirebase(() => {
-    if (!user?.uid || !firestore) return null;
+
+  const selectedDay = selectedDate || currentDate;
+
+  const schedulesQuery = useMemoFirebase(() => {
+    if (!user || !firestore || !user.uid || !selectedDay) return null;
+    
     return query(
-      collectionGroup(firestore, 'schedules'),
+      collectionGroup(firestore, 'visits'), 
+      where('date', '==', format(selectedDay, 'yyyy-MM-dd')),
       where('userId', '==', user.uid)
     );
-  }, [firestore, user?.uid]);
+  }, [firestore, user, selectedDay]);
 
-  const { data: visits, isLoading: isVisitsLoading } = useCollection<Visit>(visitsQuery);
+  const {
+    data: visits,
+    isLoading: isVisitsLoading,
+  } = useCollection<Visit>(schedulesQuery);
 
   const daysWithVisits = React.useMemo(() => {
     if (!visits) return [];
@@ -178,6 +184,7 @@ export default function SchedulePage() {
 
   const handlePrevWeek = () => setCurrentDate((prev) => addDays(prev, -7));
   const handleNextWeek = () => setCurrentDate((prev) => addDays(prev, 7));
+
   const handleDateSelect = (date: Date | undefined) => setSelectedDate(date);
 
   const handleAddNewVisit = () => {
@@ -192,16 +199,19 @@ export default function SchedulePage() {
 
   const handleMarkAsComplete = async (visit: Visit) => {
     if (!user || !firestore) return;
+
     const visitRef = doc(
       firestore,
-      `users/${user.uid}/clients/${visit.clientId}/schedules`,
+      `users/${user.uid}/clients/${visit.clientId}/visits`,
       visit.id
     );
+
     try {
       await updateDoc(visitRef, {
         status: 'completed',
         completedDate: new Date().toISOString(),
       });
+
       toast({
         title: 'Visita Concluída!',
         description: `A visita para ${visit.clientName} foi marcada como concluída.`,
@@ -217,11 +227,13 @@ export default function SchedulePage() {
 
   const handleDeleteVisit = async (visit: Visit) => {
     if (!user || !firestore) return;
+
     const visitRef = doc(
       firestore,
-      `users/${user.uid}/clients/${visit.clientId}/schedules`,
+      `users/${user.uid}/clients/${visit.clientId}/visits`,
       visit.id
     );
+
     try {
       await deleteDoc(visitRef);
       toast({
@@ -345,11 +357,13 @@ export default function SchedulePage() {
               variant="outline"
               size="sm"
               className="h-8 gap-1"
-              onClick={() => setViewMode(viewMode === 'week' ? 'month' : 'week')}
+              onClick={() => setViewMode(viewMode === 'week' ?
+'month' : 'week')}
             >
               <CalendarIcon className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                {viewMode === 'week' ? 'Visão Mensal' : 'Visão Semanal'}
+                {viewMode === 'week' ?
+'Visão Mensal' : 'Visão Semanal'}
               </span>
             </Button>
             <Button
@@ -365,6 +379,7 @@ export default function SchedulePage() {
           </div>
         </div>
 
+        
         {isVisitsLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-7 flex-1 gap-2 items-start">
             {Array.from({ length: 7 }).map((_, index) => (
@@ -375,7 +390,8 @@ export default function SchedulePage() {
               </div>
             ))}
           </div>
-        ) : viewMode === 'week' ? (
+        ) : viewMode === 'week' ?
+(
           <div className="grid grid-cols-1 md:grid-cols-7 flex-1 gap-2 items-start">
             {weekDays.map((day, index) => (
               <div key={day.toISOString()} className="flex flex-col gap-2">
@@ -413,7 +429,7 @@ export default function SchedulePage() {
                         </CardFooter>
                       </Card>
                     ))
-                  ) : (
+                ) : (
                     <div className="text-center text-sm text-muted-foreground p-4">
                       Nenhuma visita
                     </div>
@@ -455,7 +471,8 @@ export default function SchedulePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-2">
-                {selectedDayVisits.length > 0 ? (
+                {selectedDayVisits.length > 0 ?
+(
                   selectedDayVisits.map((visit) => (
                     <div
                       key={visit.id}

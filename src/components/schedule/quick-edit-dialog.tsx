@@ -1,3 +1,4 @@
+
 'use client';
 import * as React from 'react';
 import {
@@ -148,7 +149,7 @@ function QuickEditDialog({ visit }: { visit: Visit }) {
 
       const visitRef = doc(
         firestore,
-        `users/${user.uid}/clients/${visit.clientId}/schedules`,
+        `users/${user.uid}/clients/${visit.clientId}/visits`,
         visit.id
       );
       await updateDoc(visitRef, { productsUsed });

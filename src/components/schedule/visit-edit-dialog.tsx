@@ -252,6 +252,7 @@ export function VisitEditDialog({
         poolId,
         clientName,
         scheduledDate: scheduledDate.toISOString(),
+        date: format(scheduledDate, 'yyyy-MM-dd'),
         time,
         notes: notes || '',
         productsUsed: productsUsed || [],
@@ -259,11 +260,10 @@ export function VisitEditDialog({
         updatedAt: serverTimestamp(),
       };
 
-      // Linha 44 CORRIGIDA:
-const collectionRef = collection(
-  firestore,
-  `users/${auth.currentUser.uid}/clients/${clientId}/visits`
-);
+      const collectionRef = collection(
+        firestore,
+        `users/${auth.currentUser.uid}/clients/${clientId}/visits`
+      );
       let visitId: string;
 
       if (visit?.id) {
