@@ -43,7 +43,6 @@ import {
   useAuth,
   useFirestore,
   useCollection,
-  useMemoFirebase,
 } from '@/firebase';
 import {
   doc,
@@ -131,14 +130,14 @@ export function VisitEditDialog({
     },
   });
 
-  const productsQuery = useMemoFirebase(() => {
+  const productsQuery = React.useMemo(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'products'));
   }, [firestore]);
   const { data: productList, isLoading: areProductsLoading } =
     useCollection<Product>(productsQuery);
 
-  const poolsQuery = useMemoFirebase(() => {
+  const poolsQuery = React.useMemo(() => {
     if (!auth?.currentUser || !firestore || !selectedClientId) return null;
     return query(
       collection(

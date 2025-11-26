@@ -31,7 +31,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   useFirestore,
-  useMemoFirebase,
   useCollection,
   useUser,
 } from '@/firebase';
@@ -62,7 +61,7 @@ export default function ProductsPage() {
   );
   const [filter, setFilter] = React.useState('all');
 
-  const productsQuery = useMemoFirebase(() => {
+  const productsQuery = React.useMemo(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'products'));
   }, [firestore]);

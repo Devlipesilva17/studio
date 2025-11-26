@@ -29,7 +29,6 @@ import type { Visit, Client, Pool, Product } from '@/lib/types';
 import {
   useUser,
   useFirestore,
-  useMemoFirebase,
   useCollection,
   useDoc,
   useFirebase,
@@ -95,14 +94,14 @@ function QuickEditDialog({ visit }: { visit: Visit }) {
   const [isProductPopoverOpen, setIsProductPopoverOpen] = React.useState(false);
 
 
-  const poolRef = useMemoFirebase(() => {
+  const poolRef = React.useMemo(() => {
     if (!user || !firestore || !visit || !visit.poolId) return null;
     return doc(firestore, `users/${user.uid}/clients/${visit.clientId}/pools`, visit.poolId);
   }, [user, firestore, visit]);
 
   const { data: poolData, isLoading: isPoolLoading } = useDoc<Pool>(poolRef);
   
-  const productsQuery = useMemoFirebase(() => {
+  const productsQuery = React.useMemo(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'products'));
   }, [firestore]);
@@ -368,13 +367,13 @@ export default function SchedulePage() {
     setLocale(userLocale);
   }, []);
 
-  const clientsQuery = useMemoFirebase(() => {
+  const clientsQuery = React.useMemo(() => {
     if (!user || !firestore) return null;
     return query(collection(firestore, `users/${user.uid}/clients`));
   }, [firestore, user]);
   const { data: clientList, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
   
-  const schedulesQuery = useMemoFirebase(() => {
+  const schedulesQuery = React.useMemo(() => {
     if (!user?.uid || !firestore) {
       return null;
     }

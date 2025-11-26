@@ -39,7 +39,6 @@ import { useToast } from '@/hooks/use-toast';
 import {
   useFirebase,
   useDoc,
-  useMemoFirebase,
   useCollection,
 } from '@/firebase';
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -53,7 +52,7 @@ function QuickEditDialog({ visit }: { visit: Visit }) {
   const [isSaving, setIsSaving] = React.useState(false);
   const [isProductPopoverOpen, setIsProductPopoverOpen] = React.useState(false);
 
-  const poolRef = useMemoFirebase(() => {
+  const poolRef = React.useMemo(() => {
     if (!user || !firestore || !visit || !visit.poolId) return null;
     return doc(
       firestore,
@@ -64,7 +63,7 @@ function QuickEditDialog({ visit }: { visit: Visit }) {
 
   const { data: poolData, isLoading: isPoolLoading } = useDoc<Pool>(poolRef);
 
-  const productsQuery = useMemoFirebase(() => {
+  const productsQuery = React.useMemo(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'products'));
   }, [firestore]);

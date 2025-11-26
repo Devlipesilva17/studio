@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useUser, useFirestore, useDoc, useMemo, useCollection } from '@/firebase';
+import { useUser, useFirestore, useDoc, useCollection } from '@/firebase';
 import { doc, collection, query, updateDoc, addDoc, serverTimestamp, deleteDoc, arrayUnion } from 'firebase/firestore';
 import type { Client, Pool } from '@/lib/types';
 import { useForm, useFieldArray } from 'react-hook-form';
