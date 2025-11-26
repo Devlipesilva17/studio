@@ -2,9 +2,9 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import type { User } from 'firebase/auth';
+import { User } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { I18nContextType, Language, Dictionary, User as UserProfile } from '@/lib/types';
 import ptDictionary from '@/locales/pt.json';
 import enDictionary from '@/locales/en.json';
@@ -39,15 +39,15 @@ const getInitialLanguage = (): Language => {
     return 'pt'; // Default language
 };
 
-export const I18nProvider = ({ children, user }: { children: ReactNode, user: User | null }) => {
+export const I18nProvider = ({ children }: { children: ReactNode }) => {
     const firestore = useFirestore();
+    const { user } = useUser();
     const [language, setLanguage] = useState<Language>(getInitialLanguage());
     const [dictionary, setDictionary] = useState<Dictionary>(dictionaries[language]);
     const [dateLocale, setDateLocale] = useState(() => dateLocales[language]);
 
     useEffect(() => {
         if (!user || !firestore) {
-            // Not logged in, use localStorage or browser preference
             const initialLang = getInitialLanguage();
             setLanguage(initialLang);
             return;
@@ -71,7 +71,9 @@ export const I18nProvider = ({ children, user }: { children: ReactNode, user: Us
     const handleSetLanguage = useCallback((lang: Language) => {
         if (dictionaries[lang]) {
             setLanguage(lang);
-            localStorage.setItem('language', lang);
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('language', lang);
+            }
         }
     }, []);
 
@@ -105,7 +107,6 @@ export const useI18n = (): I18nContextType => {
     return context;
 };
 
-// Helper function to get nested keys, e.g., t('common.save')
 export const useTranslation = () => {
     const { dictionary } = useI18n();
 
