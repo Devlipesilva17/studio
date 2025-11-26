@@ -39,33 +39,16 @@ import { Badge } from '@/components/ui/badge';
 import { PoolIcon } from '@/components/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useAuth, useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { ThemeToggle } from '@/components/theme-toggle';
-import type { Visit, Client } from '@/lib/types';
-import { collection, onSnapshot, query, collectionGroup, where } from 'firebase/firestore';
-
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const pathname = usePathname();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
   const router = useRouter();
-
-  const schedulesQuery = React.useMemo(() => {
-    if (!user?.uid || !firestore) {
-      return null;
-    }
-    return query(
-      collectionGroup(firestore, 'schedules'),
-      where('userId', '==', user.uid)
-    );
-  }, [user?.uid, firestore]);
-
-  const { data: visits, isLoading: areSchedulesLoading } = useCollection<Visit>(schedulesQuery);
-
 
   const handleLogout = async () => {
     if (auth) {
@@ -74,11 +57,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   };
   
-  const todayVisitsCount = React.useMemo(() => {
-      if (!visits) return 0;
-      const todayString = new Date().toDateString();
-      return visits.filter(v => new Date(v.scheduledDate).toDateString() === todayString && v.status === 'pending').length;
-  }, [visits]);
+  const todayVisitsCount = 0; // Temporarily disabled to fix startup error
 
   const navItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
