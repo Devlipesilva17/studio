@@ -89,7 +89,7 @@ const QuickEditDialog = React.lazy(() => import('@/components/schedule/quick-edi
 const VisitEditDialog = React.lazy(() => import('@/components/schedule/visit-edit-dialog').then(module => ({ default: module.VisitEditDialog })));
 
 
-export default function SchedulePage() {
+export default function SchedulePage({ clients }: { clients: Client[] }) {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -109,12 +109,6 @@ export default function SchedulePage() {
     const userLocale = navigator.language || 'pt-BR';
     setLocale(userLocale);
   }, []);
-
-  const clientsQuery = useMemoFirebase(() => {
-    if (!user?.uid || !firestore) return null;
-    return query(collection(firestore, `users/${user.uid}/clients`));
-  }, [firestore, user?.uid]);
-  const { data: clientList, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
   
   const schedulesQuery = useMemoFirebase(() => {
     if (!user?.uid || !firestore) {
@@ -128,7 +122,7 @@ export default function SchedulePage() {
   
   const { data: visits, isLoading: areSchedulesLoading } = useCollection<Visit>(schedulesQuery);
   
-  const isLoading = areClientsLoading || areSchedulesLoading;
+  const isLoading = areSchedulesLoading;
 
 
   const daysWithVisits = React.useMemo(() => {
@@ -507,9 +501,11 @@ export default function SchedulePage() {
           visit={selectedVisit}
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
-          clients={clientList || []}
+          clients={clients || []}
         />
       </React.Suspense>
     </>
   );
 }
+
+    

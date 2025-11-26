@@ -39,9 +39,12 @@ import { Badge } from '@/components/ui/badge';
 import { PoolIcon } from '@/components/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { collection, query, where, collectionGroup } from 'firebase/firestore';
+import type { Visit, Client } from '@/lib/types';
+
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
@@ -49,6 +52,35 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const firestore = useFirestore();
+
+
+  const schedulesQuery = useMemoFirebase(() => {
+    if (!user?.uid || !firestore) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    return query(
+      collectionGroup(firestore, 'schedules'),
+      where('userId', '==', user.uid),
+      where('scheduledDate', '>=', today.toISOString()),
+      where('scheduledDate', '<', tomorrow.toISOString()),
+      where('status', '==', 'pending')
+    );
+  }, [user?.uid, firestore]);
+
+  const { data: todayVisits } = useCollection<Visit>(schedulesQuery);
+  const todayVisitsCount = todayVisits?.length || 0;
+
+  const clientsQuery = useMemoFirebase(() => {
+    if (!user?.uid || !firestore) return null;
+    return query(collection(firestore, `users/${user.uid}/clients`));
+  }, [user?.uid, firestore]);
+
+  const { data: clientList } = useCollection<Client>(clientsQuery);
+
 
   const handleLogout = async () => {
     if (auth) {
@@ -56,8 +88,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       router.push('/');
     }
   };
-  
-  const todayVisitsCount = 0; // Temporarily disabled to fix startup error
 
   const navItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -88,6 +118,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
+
+  // Clone children to pass clients prop
+  const childrenWithProps = React.Children.map(children, child => {
+    if (React.isValidElement(child)) {
+      // This is a bit of a hack, but it's the most direct way to pass props down
+      // to the page component in this file structure.
+      return React.cloneElement(child as React.ReactElement<any>, { clients: clientList });
+    }
+    return child;
+  });
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -242,9 +282,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </DropdownMenu>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
-            {children}
+            {childrenWithProps}
         </main>
       </div>
     </div>
   );
 }
+
+    
