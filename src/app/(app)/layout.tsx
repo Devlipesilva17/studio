@@ -53,7 +53,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const firestore = useFirestore();
   const router = useRouter();
 
-  const schedulesQuery = React.useMemo(() => {
+  const schedulesQuery = useMemoFirebase(() => {
     if (!user?.uid || !firestore) {
       return null;
     }
