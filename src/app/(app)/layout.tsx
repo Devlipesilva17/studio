@@ -42,44 +42,28 @@ import { useAuth, useCollection, useFirestore, useUser, useMemoFirebase } from '
 import { signOut } from 'firebase/auth';
 import { ThemeToggle } from '@/components/theme-toggle';
 import type { Visit, Client } from '@/lib/types';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, onSnapshot, query, collectionGroup, where } from 'firebase/firestore';
 
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const pathname = usePathname();
   const auth = useAuth();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
 
-  const [visits, setVisits] = React.useState<Visit[]>([]);
-
-  const clientsQuery = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return query(collection(firestore, `users/${user.uid}/clients`));
-  }, [user, firestore]);
-  const { data: clientList, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
-  
-  React.useEffect(() => {
-    if (!user || !firestore || !clientList) {
-      return;
+  const schedulesQuery = React.useMemo(() => {
+    if (!user?.uid || !firestore) {
+      return null;
     }
+    return query(
+      collectionGroup(firestore, 'schedules'),
+      where('userId', '==', user.uid)
+    );
+  }, [user?.uid, firestore]);
 
-    const unsubscribes = clientList.map(client => {
-      const scheduleCollection = collection(firestore, `users/${user.uid}/clients/${client.id}/schedules`);
-      return onSnapshot(scheduleCollection, snapshot => {
-        setVisits(prev => {
-          const otherClientVisits = prev.filter(v => v.clientId !== client.id);
-          const newVisits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Visit));
-          return [...otherClientVisits, ...newVisits];
-        });
-      });
-    });
-    
-    return () => unsubscribes.forEach(unsub => unsub());
-
-  }, [user, firestore, clientList]);
+  const { data: visits, isLoading: areSchedulesLoading } = useCollection<Visit>(schedulesQuery);
 
 
   const handleLogout = async () => {
@@ -88,7 +72,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       router.push('/');
     }
   };
-
+  
   const todayVisitsCount = React.useMemo(() => {
       if (!visits) return 0;
       const todayString = new Date().toDateString();
