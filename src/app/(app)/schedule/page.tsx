@@ -120,16 +120,10 @@ export default function SchedulePage() {
       where('userId', '==', user.uid)
     );
   }, [user?.uid, firestore]);
-
-  const clientsQuery = useMemoFirebase(() => {
-    if (!user?.uid || !firestore) return null;
-    return query(collection(firestore, `users/${user.uid}/clients`));
-  }, [firestore, user?.uid]);
   
   const { data: visits, isLoading: areSchedulesLoading } = useCollection<Visit>(schedulesQuery);
-  const { data: clients, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
   
-  const isLoading = areSchedulesLoading || areClientsLoading;
+  const isLoading = areSchedulesLoading;
 
 
   const daysWithVisits = React.useMemo(() => {
@@ -508,11 +502,8 @@ export default function SchedulePage() {
           visit={selectedVisit}
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
-          clients={clients || []}
         />
       </React.Suspense>
     </>
   );
 }
-
-    

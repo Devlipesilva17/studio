@@ -1,3 +1,4 @@
+
 'use client';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
@@ -43,6 +44,7 @@ import {
   useAuth,
   useFirestore,
   useCollection,
+  useMemoFirebase,
 } from '@/firebase';
 import {
   doc,
@@ -97,14 +99,12 @@ type VisitEditDialogProps = {
   visit?: Visit;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  clients: Client[];
 };
 
 export function VisitEditDialog({
   visit,
   open,
   onOpenChange,
-  clients,
 }: VisitEditDialogProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -129,6 +129,13 @@ export function VisitEditDialog({
       productsUsed: [],
     },
   });
+
+  const clientsQuery = useMemoFirebase(() => {
+    if (!auth?.currentUser || !firestore) return null;
+    return query(collection(firestore, `users/${auth.currentUser.uid}/clients`));
+  }, [firestore, auth?.currentUser]);
+
+  const { data: clients, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
 
   const productsQuery = React.useMemo(() => {
     if (!firestore) return null;
@@ -222,7 +229,7 @@ export function VisitEditDialog({
   };
 
   const onSubmit = async (values: VisitFormValues) => {
-    if (!auth?.currentUser || !firestore) {
+    if (!auth?.currentUser || !firestore || !clients) {
       toast({
         variant: 'destructive',
         title: 'Erro de Autenticação',
@@ -337,7 +344,7 @@ export function VisitEditDialog({
   }, [clients]);
 
   const selectedClientName =
-    clients.find((c) => c.id === selectedClientId)?.name ||
+    clients?.find((c) => c.id === selectedClientId)?.name ||
     'Selecione um cliente';
 
   const watchedProductsUsed = form.watch('productsUsed') || [];
@@ -383,12 +390,13 @@ export function VisitEditDialog({
                             <Button
                               variant="outline"
                               role="combobox"
+                              disabled={areClientsLoading}
                               className={cn(
                                 'w-full justify-between',
                                 !field.value && 'text-muted-foreground'
                               )}
                             >
-                              {selectedClientName}
+                              {areClientsLoading ? "Carregando..." : selectedClientName}
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
