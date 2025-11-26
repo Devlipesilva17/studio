@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemo, useCollection } from '@/firebase';
 import { doc, collection, query, updateDoc, addDoc, serverTimestamp, deleteDoc, arrayUnion } from 'firebase/firestore';
 import type { Client, Pool } from '@/lib/types';
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -94,12 +94,12 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
   const [activeTab, setActiveTab] = React.useState('pool-0');
 
 
-  const clientRef = useMemoFirebase(() => {
+  const clientRef = React.useMemo(() => {
     if (!user || !firestore || !clientId) return null;
     return doc(firestore, `users/${user.uid}/clients`, clientId);
   }, [firestore, user, clientId]);
 
-  const poolsQuery = useMemoFirebase(() => {
+  const poolsQuery = React.useMemo(() => {
     if (!user || !firestore || !clientId) return null;
     return query(collection(firestore, `users/${user.uid}/clients/${clientId}/pools`));
   }, [firestore, user, clientId]);
