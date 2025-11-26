@@ -31,10 +31,13 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ClientEditDialog } from '@/components/clients/client-edit-dialog';
 import type { Client } from '@/lib/types';
 import { useUser, useFirestore, useCollection } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const ClientEditDialog = React.lazy(() => import('@/components/clients/client-edit-dialog').then(module => ({ default: module.ClientEditDialog })));
+
 
 export default function ClientsPage() {
   const { user } = useUser();
@@ -222,12 +225,14 @@ export default function ClientsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-      <ClientEditDialog
-        client={selectedClient}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        onClientUpdate={handleClientUpdate}
-      />
+      <React.Suspense fallback={<div className='fixed inset-0 bg-black/50 flex items-center justify-center'><Skeleton className='h-96 w-full max-w-md' /></div>}>
+        <ClientEditDialog
+          client={selectedClient}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onClientUpdate={handleClientUpdate}
+        />
+      </React.Suspense>
     </>
   );
 }

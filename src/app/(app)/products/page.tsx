@@ -36,7 +36,6 @@ import {
 } from '@/firebase';
 import { collection, query, deleteDoc, doc } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
-import { ProductEditDialog } from '@/components/products/product-edit-dialog';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -50,6 +49,10 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const ProductEditDialog = React.lazy(() => import('@/components/products/product-edit-dialog').then(module => ({ default: module.ProductEditDialog })));
+
 
 export default function ProductsPage() {
   const { user } = useUser();
@@ -291,11 +294,13 @@ export default function ProductsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-      <ProductEditDialog
-        product={selectedProduct}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-      />
+       <React.Suspense fallback={<div className='fixed inset-0 bg-black/50 flex items-center justify-center'><Skeleton className='h-96 w-full max-w-md' /></div>}>
+        <ProductEditDialog
+          product={selectedProduct}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+        />
+      </React.Suspense>
     </>
   );
 }
