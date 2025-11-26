@@ -17,6 +17,7 @@ import {
   Search,
   Settings,
   LogOut,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -101,6 +102,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const unreadNotifications = notifications.filter(n => !n.read).length;
 
+  if (isUserLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
