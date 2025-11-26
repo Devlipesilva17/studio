@@ -1,5 +1,7 @@
 
 
+import type { Locale } from "date-fns";
+
 export type Client = {
   id: string;
   name: string;
@@ -77,7 +79,7 @@ export type User = {
     email: string;
     companyName?: string;
     companyLogo?: string;
-    language?: string;
+    language?: 'pt' | 'en' | 'es';
     theme?: string;
     notificationPrefs?: {
         pendingClients?: boolean;
@@ -88,3 +90,13 @@ export type User = {
     googleTokenExpiry?: number;
 };
 
+export type Language = 'pt' | 'en' | 'es';
+
+export type Dictionary = { [key: string]: any };
+
+export type I18nContextType = {
+    language: Language;
+    setLanguage: (language: Language) => void;
+    dictionary: Dictionary;
+    dateLocale: Locale;
+};

@@ -1,12 +1,20 @@
+
 'use client';
 
 import React, { useMemo, type ReactNode } from 'react';
-import { FirebaseProvider } from '@/firebase/provider';
+import { FirebaseProvider, useUser } from '@/firebase/provider';
 import { initializeFirebase } from '@/firebase';
+import { I18nProvider } from '@/i18n/provider';
 
 interface FirebaseClientProviderProps {
   children: ReactNode;
 }
+
+// Inner component to access the user from FirebaseProvider
+const I18nWrapper = ({ children }: { children: ReactNode }) => {
+    const { user } = useUser();
+    return <I18nProvider user={user}>{children}</I18nProvider>;
+};
 
 export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
   const firebaseServices = useMemo(() => {
@@ -20,7 +28,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       auth={firebaseServices.auth}
       firestore={firebaseServices.firestore}
     >
-      {children}
+        <I18nWrapper>{children}</I18nWrapper>
     </FirebaseProvider>
   );
 }

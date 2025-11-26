@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Inter, Space_Grotesk, Source_Code_Pro } from 'next/font/google';
 import './globals.css';
@@ -37,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt" suppressHydrationWarning>
       <head />
       <body
         suppressHydrationWarning

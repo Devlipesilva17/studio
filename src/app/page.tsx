@@ -23,11 +23,14 @@ import {
 } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useTranslation } from '@/i18n/provider';
 
 export default function LoginPage() {
+  const t = useTranslation();
+  
   const heroImage = {
     id: 'pool-hero',
-    description: 'Uma bela piscina moderna ao entardecer.',
+    description: 'A beautiful modern swimming pool at dusk.',
     imageUrl: 'https://picsum.photos/seed/pool-hero/1200/800',
     imageHint: 'modern pool',
   };
@@ -80,16 +83,16 @@ export default function LoginPage() {
     if (!auth) {
       toast({
         variant: 'destructive',
-        title: 'Erro de Inicialização',
-        description: 'Serviço de autenticação não disponível.',
+        title: t('login.errors.authInit'),
+        description: t('login.errors.authInit'),
       });
       return;
     }
     if (!email || !password) {
         toast({
             variant: "destructive",
-            title: "Campos Vazios",
-            description: "Por favor, preencha o e-mail e a senha.",
+            title: t('common.error'),
+            description: t('login.errors.emptyFields'),
         });
         return;
     }
@@ -100,33 +103,31 @@ export default function LoginPage() {
     try {
       if (isSignUp) {
         await createUserWithEmailAndPassword(auth, email, password);
-        // O onAuthStateChanged irá redirecionar após o cadastro e login automático
       } else {
         await signInWithEmailAndPassword(auth, email, password);
-        // O onAuthStateChanged irá redirecionar
       }
     } catch (error: any) {
-      let title = 'Erro no Login';
+      let title = t('common.error');
       let description = 'Ocorreu um erro desconhecido. Tente novamente.';
 
       switch (error.code) {
         case 'auth/invalid-email':
-          title = 'E-mail Inválido';
-          description = 'O formato do e-mail digitado não é válido.';
+          title = t('common.error');
+          description = t('login.errors.invalidEmail');
           break;
         case 'auth/user-not-found':
         case 'auth/wrong-password':
         case 'auth/invalid-credential':
-          title = 'Credenciais Inválidas';
-          description = 'E-mail ou senha inválidos. Verifique e tente novamente.';
+          title = t('common.error');
+          description = t('login.errors.invalidCredentials');
           break;
         case 'auth/email-already-in-use':
-          title = 'E-mail já Cadastrado';
-          description = 'Este e-mail já está em uso. Tente fazer login.';
+          title = t('common.error');
+          description = t('login.errors.emailInUse');
           break;
         case 'auth/weak-password':
-          title = 'Senha Fraca';
-          description = 'A senha deve ter pelo menos 6 caracteres.';
+          title = t('common.error');
+          description = t('login.errors.weakPassword');
           break;
         default:
           console.error('Authentication error:', error);
@@ -143,7 +144,6 @@ export default function LoginPage() {
   };
 
   React.useEffect(() => {
-    // Redireciona se o usuário já estiver logado (e não estiver mais carregando)
     if (!isUserLoading && user) {
       router.push('/dashboard');
     }
@@ -158,32 +158,32 @@ export default function LoginPage() {
           <div className="grid gap-2 text-center">
             <div className="flex justify-center items-center gap-2 mb-4">
               <PoolIcon className="w-8 h-8 text-primary" />
-              <h1 className="text-3xl font-bold font-headline">Piscinei App</h1>
+              <h1 className="text-3xl font-bold font-headline">{t('common.poolcarePro')}</h1>
             </div>
             <p className="text-balance text-muted-foreground">
               {isSignUp
-                ? 'Crie sua conta para começar a gerenciar'
-                : 'Entre com seu e-mail para acessar seu painel'}
+                ? t('login.signUpMessage')
+                : t('login.welcomeMessage')}
             </p>
           </div>
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">
-                {isSignUp ? 'Criar Conta' : 'Login'}
+                {isSignUp ? t('login.createAccountTitle') : t('login.title')}
               </CardTitle>
               <CardDescription>
                 {isSignUp
-                  ? 'Preencha os campos para se registrar.'
-                  : 'Bem-vindo ao seu painel de manutenção.'}
+                  ? t('login.fillToRegister')
+                  : t('login.welcomeTo')}
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <div className="grid gap-2 relative">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('login.emailLabel')}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@exemplo.com"
+                  placeholder={t('login.emailPlaceholder')}
                   required
                   value={email}
                   onChange={handleEmailChange}
@@ -208,13 +208,13 @@ export default function LoginPage() {
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="password">Senha</Label>
+                  <Label htmlFor="password">{t('login.passwordLabel')}</Label>
                   {!isSignUp && (
                     <Link
                       href="#"
                       className="ml-auto inline-block text-sm underline"
                     >
-                      Esqueceu sua senha?
+                      {t('login.forgotPassword')}
                     </Link>
                   )}
                 </div>
@@ -242,7 +242,7 @@ export default function LoginPage() {
               </div>
               <Button onClick={handleAuthAction} type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isSignUp ? 'Criar Conta' : 'Login'}
+                {isSignUp ? t('login.createAccountButton') : t('login.loginButton')}
               </Button>
                <Button
                 variant="outline"
@@ -251,8 +251,8 @@ export default function LoginPage() {
                 disabled={isLoading}
               >
                 {isSignUp
-                  ? 'Já tem uma conta? Fazer Login'
-                  : 'Não tem uma conta? Crie uma'}
+                  ? t('login.toggleToLogin')
+                  : t('login.toggleToSignUp')}
               </Button>
             </CardContent>
           </Card>
