@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -89,7 +90,7 @@ const QuickEditDialog = React.lazy(() => import('@/components/schedule/quick-edi
 const VisitEditDialog = React.lazy(() => import('@/components/schedule/visit-edit-dialog').then(module => ({ default: module.VisitEditDialog })));
 
 
-export default function SchedulePage({ clients }: { clients: Client[] }) {
+export default function SchedulePage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -119,10 +120,16 @@ export default function SchedulePage({ clients }: { clients: Client[] }) {
       where('userId', '==', user.uid)
     );
   }, [user?.uid, firestore]);
+
+  const clientsQuery = useMemoFirebase(() => {
+    if (!user?.uid || !firestore) return null;
+    return query(collection(firestore, `users/${user.uid}/clients`));
+  }, [firestore, user?.uid]);
   
   const { data: visits, isLoading: areSchedulesLoading } = useCollection<Visit>(schedulesQuery);
+  const { data: clients, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
   
-  const isLoading = areSchedulesLoading;
+  const isLoading = areSchedulesLoading || areClientsLoading;
 
 
   const daysWithVisits = React.useMemo(() => {
