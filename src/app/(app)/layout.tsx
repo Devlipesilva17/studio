@@ -52,35 +52,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
-  const firestore = useFirestore();
 
-
-  const schedulesQuery = useMemoFirebase(() => {
-    if (!user?.uid || !firestore) return null;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-
-    return query(
-      collectionGroup(firestore, 'schedules'),
-      where('userId', '==', user.uid),
-      where('scheduledDate', '>=', today.toISOString()),
-      where('scheduledDate', '<', tomorrow.toISOString()),
-      where('status', '==', 'pending')
+  if (isUserLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
-  }, [user?.uid, firestore]);
-
-  const { data: todayVisits } = useCollection<Visit>(schedulesQuery);
-  const todayVisitsCount = todayVisits?.length || 0;
-
-  const clientsQuery = useMemoFirebase(() => {
-    if (!user?.uid || !firestore) return null;
-    return query(collection(firestore, `users/${user.uid}/clients`));
-  }, [user?.uid, firestore]);
-
-  const { data: clientList } = useCollection<Client>(clientsQuery);
-
+  }
 
   const handleLogout = async () => {
     if (auth) {
@@ -92,7 +71,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/clients', icon: Users, label: 'Clientes' },
-    { href: '/schedule', icon: Calendar, label: 'Agenda', badge: todayVisitsCount > 0 ? String(todayVisitsCount) : undefined },
+    { href: '/schedule', icon: Calendar, label: 'Agenda', badge: undefined },
     { href: '/products', icon: FlaskConical, label: 'Produtos' },
     { href: '/payments', icon: CreditCard, label: 'Pagamentos' },
     { href: '/reports', icon: BarChart3, label: 'Relatórios' },
@@ -110,24 +89,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   ];
 
   const unreadNotifications = notifications.filter(n => !n.read).length;
-
-  if (isUserLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // Clone children to pass clients prop
-  const childrenWithProps = React.Children.map(children, child => {
-    if (React.isValidElement(child)) {
-      // This is a bit of a hack, but it's the most direct way to pass props down
-      // to the page component in this file structure.
-      return React.cloneElement(child as React.ReactElement<any>, { clients: clientList });
-    }
-    return child;
-  });
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -282,11 +243,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </DropdownMenu>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
-            {childrenWithProps}
+            {children}
         </main>
       </div>
     </div>
   );
 }
-
-    
