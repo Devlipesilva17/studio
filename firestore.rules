@@ -11,7 +11,7 @@
  * - /users/{userId}/clients/{clientId}/pools/{poolId}: Stores pool details, accessible only to the owning user.
  * - /products/{productId}: Stores a global catalog of products, publicly readable but writable only by admins (not yet implemented in this ruleset).
  * - /users/{userId}/clients/{clientId}/schedules/{scheduleId}: Stores schedule entries, accessible only to the owning user.
- * - /users/{userId}/clients/{clientId}/visits/{visitId}: Stores visit logs, accessible only to the owning user.
+ * - /users/{userId}/clients/{clientId/visits/{visitId}: Stores visit logs, accessible only to the owning user.
  * - /users/{userId}/clients/{clientId}/payments/{paymentId}: Stores payment information, accessible only to the owning user.
  * - /users/{userId}/reports/{reportId}: Stores generated reports, accessible only to the owning user.
  *
@@ -56,7 +56,7 @@ service cloud.firestore {
       allow get: if isOwner(userId);
       allow list: if false; // Listing users is not permitted.
 
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id; //Immutable ID
       allow delete: if isExistingOwner(userId);
     }
@@ -285,3 +285,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

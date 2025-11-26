@@ -1,4 +1,3 @@
-
 'use client';
 import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,8 +67,8 @@ export default function SettingsPage() {
                 companyName: userProfile.companyName || '',
                 language: userProfile.language || language,
                 notifications: {
-                    pendingClients: userProfile.notificationPrefs?.pendingClients || false,
-                    visitReminders: userProfile.notificationPrefs?.visitReminders || false,
+                    pendingClients: (userProfile.notificationPrefs as any)?.pendingClients || false,
+                    visitReminders: (userProfile.notificationPrefs as any)?.visitReminders || false,
                 },
             });
             if (userProfile.companyLogo) {
@@ -139,17 +138,19 @@ export default function SettingsPage() {
     };
     
     const onSubmit = async (data: SettingsFormValues) => {
-        if (!userRef) {
+        if (!userRef || !user) {
             toast({ variant: 'destructive', title: t('common.error'), description: t('settings.errorUserNotFound') });
             return;
         }
         setIsSaving(true);
         try {
-            const dataToSave = {
+            const dataToSave: Partial<UserProfile> = {
+                id: user.uid,
+                email: user.email || '',
                 companyName: data.companyName,
-                language: data.language,
+                language: data.language as any,
                 notificationPrefs: data.notifications,
-                companyLogo: logoPreview,
+                companyLogo: logoPreview || undefined,
             }
             await setDoc(userRef, dataToSave, { merge: true });
             if (data.language) {
@@ -195,7 +196,7 @@ export default function SettingsPage() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                 <Label>{t('settings.general.language')}</Label>
-                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                <Select onValueChange={field.onChange} value={field.value} defaultValue={language}>
                                                     <FormControl>
                                                         <SelectTrigger id="language">
                                                             <SelectValue placeholder={t('settings.general.selectLanguage')} />
@@ -374,7 +375,5 @@ export default function SettingsPage() {
         </div>
     );
 }
-
-    
 
     
