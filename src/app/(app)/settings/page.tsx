@@ -18,7 +18,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
-import { Form, FormField, FormItem } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useI18n, useTranslation } from '@/i18n/provider';
 
@@ -195,7 +195,7 @@ export default function SettingsPage() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                 <Label>{t('settings.general.language')}</Label>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <Select onValueChange={field.onChange} value={field.value}>
                                                     <FormControl>
                                                         <SelectTrigger id="language">
                                                             <SelectValue placeholder={t('settings.general.selectLanguage')} />
