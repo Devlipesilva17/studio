@@ -63,9 +63,11 @@ export function useCollection<T = any>(
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
+    // Explicitly wait for a valid query object. If it's null or undefined,
+    // clear the state and stop execution until a valid query is provided.
     if (!memoizedTargetRefOrQuery) {
       setData(null);
-      setIsLoading(false);
+      setIsLoading(false); // Set to false as we are not actively fetching.
       setError(null);
       return;
     }

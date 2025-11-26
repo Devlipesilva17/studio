@@ -111,9 +111,9 @@ export default function SchedulePage() {
   }, []);
 
   const clientsQuery = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
+    if (!user?.uid || !firestore) return null;
     return query(collection(firestore, `users/${user.uid}/clients`));
-  }, [firestore, user]);
+  }, [firestore, user?.uid]);
   const { data: clientList, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
   
   const schedulesQuery = useMemoFirebase(() => {
