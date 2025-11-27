@@ -41,6 +41,7 @@ import {
   useFirebase,
   useDoc,
   useCollection,
+  useMemoFirebase,
 } from '@/firebase';
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
 import type { Visit, Pool, Product } from '@/lib/types';
@@ -53,7 +54,7 @@ function QuickEditDialog({ visit }: { visit: Visit }) {
   const [isSaving, setIsSaving] = React.useState(false);
   const [isProductPopoverOpen, setIsProductPopoverOpen] = React.useState(false);
 
-  const poolRef = React.useMemo(() => {
+  const poolRef = useMemoFirebase(() => {
     if (!user || !firestore || !visit || !visit.poolId) return null;
     return doc(
       firestore,
@@ -64,7 +65,7 @@ function QuickEditDialog({ visit }: { visit: Visit }) {
 
   const { data: poolData, isLoading: isPoolLoading } = useDoc<Pool>(poolRef);
 
-  const productsQuery = React.useMemo(() => {
+  const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'products'));
   }, [firestore]);

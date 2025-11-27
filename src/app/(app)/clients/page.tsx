@@ -32,7 +32,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Client } from '@/lib/types';
-import { useUser, useFirestore, useCollection } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -47,7 +47,7 @@ export default function ClientsPage() {
     null
   );
 
-  const clientsQuery = React.useMemo(() => {
+  const clientsQuery = useMemoFirebase(() => {
     if (!user?.uid || !firestore) return null;
     return query(collection(firestore, `users/${user.uid}/clients`));
   }, [firestore, user?.uid]);
