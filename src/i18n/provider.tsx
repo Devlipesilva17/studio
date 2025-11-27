@@ -2,7 +2,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { User } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { useFirestore, useUser } from '@/firebase';
 import { I18nContextType, Language, Dictionary, User as UserProfile } from '@/lib/types';
@@ -25,61 +24,33 @@ const dateLocales = {
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
-const getInitialLanguage = (): Language => {
-    if (typeof window !== 'undefined') {
-        const storedLang = localStorage.getItem('language') as Language;
-        if (storedLang && dictionaries[storedLang]) {
-            return storedLang;
-        }
-        const browserLang = navigator.language.split('-')[0] as Language;
-        if (dictionaries[browserLang]) {
-            return browserLang;
-        }
-    }
-    return 'pt'; // Default language
-};
-
 export const I18nProvider = ({ children }: { children: ReactNode }) => {
-    const firestore = useFirestore();
+    const [language, setLanguage] = useState<Language>('pt'); // Default to 'pt'
     const { user } = useUser();
-    const [language, setLanguage] = useState<Language>(getInitialLanguage());
-    const [dictionary, setDictionary] = useState<Dictionary>(dictionaries[language]);
-    const [dateLocale, setDateLocale] = useState(() => dateLocales[language]);
+    const firestore = useFirestore();
 
+    // Effect to listen for user language preference from Firestore
     useEffect(() => {
-        if (!user || !firestore) {
-            const initialLang = getInitialLanguage();
-            setLanguage(initialLang);
-            return;
-        };
-
-        const userRef = doc(firestore, `users/${user.uid}`);
-        const unsubscribe = onSnapshot(userRef, (doc) => {
-            const userData = doc.data() as UserProfile;
-            const userLang = userData?.language;
-            if (userLang && dictionaries[userLang]) {
-                setLanguage(userLang);
-            } else {
-                const initialLang = getInitialLanguage();
-                setLanguage(initialLang);
-            }
-        });
-
-        return () => unsubscribe();
-    }, [user, firestore]);
-
-    const handleSetLanguage = useCallback((lang: Language) => {
-        if (dictionaries[lang]) {
-            setLanguage(lang);
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('language', lang);
-            }
+        if (user?.uid && firestore) {
+            const userRef = doc(firestore, `users/${user.uid}`);
+            const unsubscribe = onSnapshot(userRef, (snapshot) => {
+                const userData = snapshot.data() as UserProfile | undefined;
+                if (userData?.language && dictionaries[userData.language]) {
+                    setLanguage(userData.language);
+                }
+            });
+            return () => unsubscribe();
         }
+    }, [user, firestore]);
+    
+    const handleSetLanguage = useCallback((lang: Language) => {
+        setLanguage(lang);
     }, []);
 
+    const dictionary = dictionaries[language];
+    const dateLocale = dateLocales[language];
+
     useEffect(() => {
-        setDictionary(dictionaries[language]);
-        setDateLocale(dateLocales[language]);
         if (typeof document !== 'undefined') {
             document.documentElement.lang = language;
         }
