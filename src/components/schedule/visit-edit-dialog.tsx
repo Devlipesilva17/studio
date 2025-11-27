@@ -137,14 +137,14 @@ export function VisitEditDialog({
 
   const { data: clients, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
 
-  const productsQuery = React.useMemo(() => {
+  const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'products'));
   }, [firestore]);
   const { data: productList, isLoading: areProductsLoading } =
     useCollection<Product>(productsQuery);
 
-  const poolsQuery = React.useMemo(() => {
+  const poolsQuery = useMemoFirebase(() => {
     if (!auth?.currentUser || !firestore || !selectedClientId) return null;
     return query(
       collection(

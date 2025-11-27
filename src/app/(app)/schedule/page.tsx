@@ -26,23 +26,19 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
-import type { Visit, Client, Pool, Product } from '@/lib/types';
+import type { Visit } from '@/lib/types';
 import {
   useUser,
   useFirestore,
   useCollection,
-  useDoc,
-  useFirebase,
   useMemoFirebase,
 } from '@/firebase';
 import {
   collection,
   query,
-  onSnapshot,
   doc,
   updateDoc,
   deleteDoc,
-  serverTimestamp,
   collectionGroup,
   where,
 } from 'firebase/firestore';
@@ -60,7 +56,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import Link from 'next/link';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,23 +63,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 const QuickEditDialog = React.lazy(() => import('@/components/schedule/quick-edit-dialog').then(module => ({ default: module.QuickEditDialog })));
 const VisitEditDialog = React.lazy(() => import('@/components/schedule/visit-edit-dialog').then(module => ({ default: module.VisitEditDialog })));
@@ -116,7 +94,7 @@ export default function SchedulePage() {
     if (!user || !firestore || !user.uid || !selectedDay) return null;
     
     return query(
-      collectionGroup(firestore, 'visits'), 
+      collectionGroup(firestore, 'visits'),
       where('date', '==', format(selectedDay, 'yyyy-MM-dd')),
       where('userId', '==', user.uid)
     );
