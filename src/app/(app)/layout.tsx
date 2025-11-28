@@ -41,11 +41,9 @@ import { Badge } from '@/components/ui/badge';
 import { PoolIcon } from '@/components/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useAuth, useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { collection, query, where, collectionGroup } from 'firebase/firestore';
-import type { Visit, Client } from '@/lib/types';
 
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
