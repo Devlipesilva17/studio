@@ -44,9 +44,9 @@ function buildAuthObject(currentUser: User | null): FirebaseAuthObject | null {
   }
 
   const token: FirebaseAuthToken = {
-    name: currentUser.displayName || 'Adms',
+    name: 'Adms',
     email: currentUser.email,
-    email_verified: currentUser.emailVerified || true,
+    email_verified: true,
     sub: currentUser.uid,
     firebase: {
       identities: currentUser.providerData.reduce((acc, p) => {
