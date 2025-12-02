@@ -112,14 +112,14 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
     name: "pools",
   });
 
-   const formatPhoneNumber = (value: string) => {
+   const formatPhoneNumber = React.useCallback((value: string) => {
     if (!value) return '';
     const digits = value.replace(/\D/g, '');
     if (digits.length <= 2) return `(${digits}`;
     if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
     if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
-  };
+  }, []);
   
   React.useEffect(() => {
     if (client || pools) {
@@ -148,7 +148,7 @@ export default function ClientDetailsPage({ params }: { params: { clientId: stri
       }
 
     }
-  }, [client, pools, form]);
+  }, [client, pools, form, formatPhoneNumber]);
 
 
   const handleCalculateVolume = React.useCallback((poolIndex: number) => {
