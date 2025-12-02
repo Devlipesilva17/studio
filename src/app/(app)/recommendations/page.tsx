@@ -3,8 +3,8 @@
 import * as React from 'react';
 import { RecommendationForm } from "@/components/recommendations/recommendation-form";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, collectionGroup, query } from "firebase/firestore";
-import type { Client, Pool } from "@/lib/types";
+import { collection, query } from "firebase/firestore";
+import type { Client } from "@/lib/types";
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function RecommendationsPage() {
@@ -16,15 +16,7 @@ export default function RecommendationsPage() {
         return query(collection(firestore, `users/${user.uid}/clients`));
     }, [user?.uid, firestore]);
 
-    const poolsQuery = useMemoFirebase(() => {
-        if (!user?.uid || !firestore) return null;
-        return query(collectionGroup(firestore, 'pools'));
-    }, [user?.uid, firestore]);
-
-    const { data: clients, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
-    const { data: pools, isLoading: arePoolsLoading } = useCollection<Pool>(poolsQuery);
-
-    const isLoading = areClientsLoading || arePoolsLoading;
+    const { data: clients, isLoading } = useCollection<Client>(clientsQuery);
 
     return (
         <div className="flex flex-col gap-6">
