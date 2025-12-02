@@ -131,28 +131,28 @@ export function VisitEditDialog({
   });
 
   const clientsQuery = useMemoFirebase(() => {
-    if (!auth?.currentUser || !firestore) return null;
+    if (!open || !auth?.currentUser || !firestore) return null;
     return query(collection(firestore, `users/${auth.currentUser.uid}/clients`));
-  }, [firestore, auth?.currentUser]);
+  }, [firestore, auth?.currentUser, open]);
 
   const { data: clients, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
 
   const productsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!open || !firestore) return null;
     return query(collection(firestore, 'products'));
-  }, [firestore]);
+  }, [firestore, open]);
   const { data: productList, isLoading: areProductsLoading } =
     useCollection<Product>(productsQuery);
 
   const poolsQuery = useMemoFirebase(() => {
-    if (!auth?.currentUser || !firestore || !selectedClientId) return null;
+    if (!open || !auth?.currentUser || !firestore || !selectedClientId) return null;
     return query(
       collection(
         firestore,
         `users/${auth.currentUser.uid}/clients/${selectedClientId}/pools`
       )
     );
-  }, [firestore, auth?.currentUser, selectedClientId]);
+  }, [firestore, auth?.currentUser, selectedClientId, open]);
 
   const { data: pools, isLoading: arePoolsLoading } = useCollection<Pool>(
     poolsQuery

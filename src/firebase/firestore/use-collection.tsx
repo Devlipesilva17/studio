@@ -71,6 +71,20 @@ export function useCollection<T = any>(
       setError(null);
       return;
     }
+    
+    const path: string =
+      memoizedTargetRefOrQuery.type === 'collection'
+        ? (memoizedTargetRefOrQuery as CollectionReference).path
+        : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString()
+
+    // **BLINDAGEM**: Prevent queries to the root or empty paths
+    if (!path || path === '/') {
+        setData(null);
+        setIsLoading(false);
+        setError(new Error("Invalid collection path provided."));
+        return;
+    }
+
 
     setIsLoading(true);
     setError(null);
@@ -87,11 +101,6 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        const path: string =
-          memoizedTargetRefOrQuery.type === 'collection'
-            ? (memoizedTargetRefOrQuery as CollectionReference).path
-            : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString()
-
         const contextualError = new FirestorePermissionError({
           operation: 'list',
           path,
@@ -110,4 +119,3 @@ export function useCollection<T = any>(
 
   return { data, isLoading, error };
 }
-
