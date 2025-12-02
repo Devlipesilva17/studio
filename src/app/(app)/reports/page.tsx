@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
+import dynamic from 'next/dynamic';
 import {
   Card,
   CardContent,
@@ -13,6 +13,14 @@ import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebas
 import type { Payment, Visit } from '@/lib/types';
 import { collectionGroup, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+
+// Lazy load the chart components
+const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false, loading: () => <Skeleton className="w-full h-[350px]" /> });
+const BarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false });
+const Bar = dynamic(() => import('recharts').then(mod => mod.Bar), { ssr: false });
+const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false });
+const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false });
+
 
 export default function ReportsPage() {
     const { user } = useUser();
@@ -70,7 +78,7 @@ export default function ReportsPage() {
                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <Card><CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader><CardContent><Skeleton className="h-10 w-1/2" /></CardContent></Card>
                     <Card><CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader><CardContent><Skeleton className="h-10 w-1/2" /></CardContent></Card>
-                    <Card><-CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader><CardContent><Skeleton className="h-10 w-1/2" /></CardContent></Card>
+                    <Card><CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader><CardContent><Skeleton className="h-10 w-1/2" /></CardContent></Card>
                 </div>
                 <Card>
                     <CardHeader>
