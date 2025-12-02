@@ -98,12 +98,17 @@ export default function SchedulePage() {
   const schedulesQuery = useMemoFirebase(() => {
     if (!user || !firestore || !user.uid || !selectedDay) return null;
     
+    const start = startOfWeek(currentDate, { weekStartsOn: 1 });
+    const end = addDays(start, 6);
+
     return query(
-      collectionGroup(firestore, 'visits'),
-      where('date', '==', format(selectedDay, 'yyyy-MM-dd')),
-      where('userId', '==', user.uid)
+        collectionGroup(firestore, 'visits'),
+        where('userId', '==', user.uid),
+        where('date', '>=', format(start, 'yyyy-MM-dd')),
+        where('date', '<=', format(end, 'yyyy-MM-dd'))
     );
-  }, [firestore, user, selectedDay]);
+  }, [firestore, user, currentDate]);
+
 
   const {
     data: visits,
@@ -134,21 +139,29 @@ export default function SchedulePage() {
     return Array.from({ length: 7 }).map((_, i) => addDays(start, i));
   }, [currentDate]);
 
-  const visitsByDay = React.useMemo(() => {
-    if (!visits) return weekDays.map(() => []);
-    return weekDays.map((day) =>
-      visits
-        .filter((visit) => {
-          const visitDate = new Date(visit.scheduledDate);
-          return (
-            visitDate.getFullYear() === day.getFullYear() &&
-            visitDate.getMonth() === day.getMonth() &&
-            visitDate.getDate() === day.getDate()
-          );
-        })
-        .sort((a, b) => a.time.localeCompare(b.time))
-    );
-  }, [weekDays, visits]);
+  const [visitsByDay, setVisitsByDay] = React.useState<Visit[][]>([]);
+
+  React.useEffect(() => {
+      if (!visits) {
+          setVisitsByDay(Array(7).fill([]));
+          return;
+      };
+      
+      const localWeekDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), i));
+
+      const newVisitsByDay = localWeekDays.map(day =>
+          visits
+              .filter(visit => {
+                  const visitDate = new Date(visit.scheduledDate);
+                  return visitDate.getFullYear() === day.getFullYear() &&
+                         visitDate.getMonth() === day.getMonth() &&
+                         visitDate.getDate() === day.getDate();
+              })
+              .sort((a, b) => a.time.localeCompare(b.time))
+      );
+      setVisitsByDay(newVisitsByDay);
+  }, [visits, currentDate]);
+
 
   const weekRange = React.useMemo(() => {
     const start = weekDays[0];
