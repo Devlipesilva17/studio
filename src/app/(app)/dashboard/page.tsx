@@ -34,18 +34,48 @@ import {
   } from "@/components/ui/table"
   import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
   import { Client, Payment, Visit } from "@/lib/types";
-  import { collection, collectionGroup, query, where, limit, orderBy } from "firebase/firestore";
+  import { collection, collectionGroup, query, where, limit, orderBy, getCountFromServer } from "firebase/firestore";
   import { Skeleton } from "@/components/ui/skeleton";
   
   export default function Dashboard() {
     const { user } = useUser();
     const firestore = useFirestore();
     const [locale, setLocale] = React.useState('pt-BR');
+    const [clientCount, setClientCount] = React.useState(0);
+    const [pendingPaymentsCount, setPendingPaymentsCount] = React.useState(0);
+    const [isLoadingAggregates, setIsLoadingAggregates] = React.useState(true);
 
     React.useEffect(() => {
         const userLocale = navigator.language || 'pt-BR';
         setLocale(userLocale);
     }, []);
+
+    // Aggregate queries
+    React.useEffect(() => {
+      async function fetchAggregates() {
+        if (!user?.uid || !firestore) return;
+
+        setIsLoadingAggregates(true);
+        try {
+          const clientsRef = collection(firestore, `users/${user.uid}/clients`);
+          const clientsQuery = query(clientsRef, where('status', '==', 'active'));
+          const clientSnapshot = await getCountFromServer(clientsQuery);
+          setClientCount(clientSnapshot.data().count);
+
+          const paymentsRef = collectionGroup(firestore, 'payments');
+          const paymentsQuery = query(paymentsRef, where('userId', '==', user.uid), where('status', '==', 'pending'));
+          const paymentSnapshot = await getCountFromServer(paymentsQuery);
+          setPendingPaymentsCount(paymentSnapshot.data().count);
+
+        } catch (error) {
+          console.error("Error fetching aggregate counts:", error);
+        } finally {
+          setIsLoadingAggregates(false);
+        }
+      }
+
+      fetchAggregates();
+    }, [user?.uid, firestore]);
 
     const todayString = new Date().toISOString().split('T')[0];
 
@@ -61,7 +91,7 @@ import {
         );
     }, [user?.uid, firestore, todayString]);
 
-    const clientsQuery = useMemoFirebase(() => {
+    const recentClientsQuery = useMemoFirebase(() => {
         if (!user?.uid || !firestore) return null;
         return query(
             collection(firestore, `users/${user.uid}/clients`),
@@ -70,29 +100,27 @@ import {
         );
     }, [user?.uid, firestore]);
 
-    const paymentsQuery = useMemoFirebase(() => {
+    const paidPaymentsQuery = useMemoFirebase(() => {
         if (!user?.uid || !firestore) return null;
         return query(
             collectionGroup(firestore, 'payments'),
-            where('userId', '==', user.uid)
+            where('userId', '==', user.uid),
+            where('status', '==', 'paid')
         );
     }, [user?.uid, firestore]);
 
     const { data: upcomingVisits, isLoading: areVisitsLoading } = useCollection<Visit>(visitsQuery);
-    const { data: recentClients, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
-    const { data: payments, isLoading: arePaymentsLoading } = useCollection<Payment>(paymentsQuery);
+    const { data: recentClients, isLoading: areClientsLoading } = useCollection<Client>(recentClientsQuery);
+    const { data: paidPayments, isLoading: arePaidPaymentsLoading } = useCollection<Payment>(paidPaymentsQuery);
 
     const dashboardData = React.useMemo(() => {
-        if (!payments) return { totalRevenue: 0, pendingPayments: [], pendingAmount: 0 };
-
-        const totalRevenue = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
-        const pendingPayments = payments.filter(p => p.status === 'pending');
-        const pendingAmount = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
-        return { totalRevenue, pendingPayments, pendingAmount };
-    }, [payments]);
+        if (!paidPayments) return { totalRevenue: 0 };
+        const totalRevenue = paidPayments.reduce((sum, p) => sum + p.amount, 0);
+        return { totalRevenue };
+    }, [paidPayments]);
 
     const todayVisitsCount = upcomingVisits?.filter(v => v.date === todayString).length || 0;
-    const isLoading = areVisitsLoading || areClientsLoading || arePaymentsLoading;
+    const isLoading = areVisitsLoading || areClientsLoading || arePaidPaymentsLoading || isLoadingAggregates;
 
     if (isLoading) {
         return (
@@ -152,7 +180,7 @@ import {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">+{recentClients?.length || 0}</div>
+                <div className="text-2xl font-bold">+{clientCount}</div>
                 <p className="text-xs text-muted-foreground">
                   +2 desde o último mês
                 </p>
@@ -164,9 +192,9 @@ import {
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{dashboardData.pendingPayments.length}</div>
+                <div className="text-2xl font-bold">{pendingPaymentsCount}</div>
                 <p className="text-xs text-muted-foreground">
-                  R$ {dashboardData.pendingAmount.toLocaleString('pt-BR')} pendentes
+                  agendados para cobrança
                 </p>
               </CardContent>
             </Card>
@@ -238,7 +266,7 @@ import {
               <CardHeader>
                 <CardTitle>Clientes Recentes</CardTitle>
                 {recentClients && <CardDescription>
-                  Você tem {recentClients.length} clientes ativos.
+                  Você tem {recentClients.length} clientes novos.
                 </CardDescription>}
               </CardHeader>
               <CardContent className="grid gap-8">
@@ -264,5 +292,3 @@ import {
         </>
     )
   }
-
-    
