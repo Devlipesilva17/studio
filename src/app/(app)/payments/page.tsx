@@ -28,16 +28,30 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DUMMY_PAYMENTS } from '@/lib/placeholder-data';
+import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { collectionGroup, query, where, limit, orderBy } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import type { Payment } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function PaymentsPage() {
-  const [payments, setPayments] = React.useState<Payment[]>([]);
+  const { user } = useUser();
+  const firestore = useFirestore();
   const [locale, setLocale] = React.useState('pt-BR');
 
+  const paymentsQuery = useMemoFirebase(() => {
+    if (!user?.uid || !firestore) return null;
+    return query(
+        collectionGroup(firestore, 'payments'),
+        where('userId', '==', user.uid),
+        orderBy('date', 'desc'),
+        limit(20)
+    );
+  }, [user?.uid, firestore]);
+
+  const { data: payments, isLoading } = useCollection<Payment>(paymentsQuery);
+  
   React.useEffect(() => {
-    setPayments(DUMMY_PAYMENTS);
     const userLocale = navigator.language || 'pt-BR';
     setLocale(userLocale);
   }, []);
@@ -85,7 +99,16 @@ export default function PaymentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {payments.map((payment) => (
+                  {isLoading && Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell><Skeleton className="h-6 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                        <TableCell className="hidden md:table-cell"><Skeleton className="h-6 w-24" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-6 w-16 ml-auto" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                    </TableRow>
+                  ))}
+                  {!isLoading && payments && payments.map((payment) => (
                     <TableRow key={payment.id}>
                       <TableCell className="font-medium">{payment.clientName}</TableCell>
                       <TableCell>
@@ -126,12 +149,17 @@ export default function PaymentsPage() {
                       </TableCell>
                     </TableRow>
                   ))}
+                   {!isLoading && (!payments || payments.length === 0) && (
+                    <TableRow>
+                        <TableCell colSpan={5} className="text-center">Nenhum pagamento encontrado.</TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
             <CardFooter>
               <div className="text-xs text-muted-foreground">
-                Mostrando <strong>1-{payments.length}</strong> de <strong>{payments.length}</strong> pagamentos
+                Mostrando <strong>{payments?.length ?? 0}</strong> de <strong>{payments?.length ?? 0}</strong> pagamentos
               </div>
             </CardFooter>
           </Card>
@@ -140,3 +168,5 @@ export default function PaymentsPage() {
     </>
   );
 }
+
+    

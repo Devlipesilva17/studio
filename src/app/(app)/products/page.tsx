@@ -36,7 +36,7 @@ import {
   useUser,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, query, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, deleteDoc, doc, limit } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -71,7 +71,8 @@ export default function ProductsPage() {
 
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'products'));
+    // Optimize initial load by fetching only the first 20 products.
+    return query(collection(firestore, 'products'), limit(20));
   }, [firestore]);
 
   const { data: productList, isLoading } = useCollection<Product>(productsQuery);
@@ -292,7 +293,7 @@ export default function ProductsPage() {
             </CardContent>
             <CardFooter>
               <div className="text-xs text-muted-foreground">
-                Mostrando <strong>1-{filteredProducts?.length ?? 0}</strong> de{' '}
+                Mostrando <strong>{filteredProducts?.length ?? 0}</strong> de{' '}
                 <strong>{productList?.length ?? 0}</strong> produtos
               </div>
             </CardFooter>
@@ -309,3 +310,5 @@ export default function ProductsPage() {
     </>
   );
 }
+
+    

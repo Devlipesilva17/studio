@@ -57,9 +57,9 @@ import {
 
         setIsLoadingAggregates(true);
         try {
+          // These queries are fast as they only fetch counts from the server.
           const clientsRef = collection(firestore, `users/${user.uid}/clients`);
-          const clientsQuery = query(clientsRef, where('status', '==', 'active'));
-          const clientSnapshot = await getCountFromServer(clientsQuery);
+          const clientSnapshot = await getCountFromServer(clientsRef);
           setClientCount(clientSnapshot.data().count);
 
           const paymentsRef = collectionGroup(firestore, 'payments');
@@ -113,10 +113,9 @@ import {
     const { data: recentClients, isLoading: areClientsLoading } = useCollection<Client>(recentClientsQuery);
     const { data: paidPayments, isLoading: arePaidPaymentsLoading } = useCollection<Payment>(paidPaymentsQuery);
 
-    const dashboardData = React.useMemo(() => {
-        if (!paidPayments) return { totalRevenue: 0 };
-        const totalRevenue = paidPayments.reduce((sum, p) => sum + p.amount, 0);
-        return { totalRevenue };
+    const totalRevenue = React.useMemo(() => {
+        if (!paidPayments) return 0;
+        return paidPayments.reduce((sum, p) => sum + p.amount, 0);
     }, [paidPayments]);
 
     const todayVisitsCount = upcomingVisits?.filter(v => v.date === todayString).length || 0;
@@ -166,7 +165,7 @@ import {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">R$ {dashboardData.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2}) }</div>
+                <div className="text-2xl font-bold">R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2}) }</div>
                 <p className="text-xs text-muted-foreground">
                   +20.1% do último mês
                 </p>
@@ -292,3 +291,5 @@ import {
         </>
     )
   }
+
+    
