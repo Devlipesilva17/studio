@@ -11,6 +11,7 @@ interface FirebaseAuthToken {
   name: string | null;
   email: string | null;
   email_verified: boolean;
+  phone_number: string | null;
   sub: string;
   firebase: {
     identities: Record<string, string[]>;
@@ -44,9 +45,10 @@ function buildAuthObject(currentUser: User | null): FirebaseAuthObject | null {
   }
 
   const token: FirebaseAuthToken = {
-    name: 'Adms',
+    name: currentUser.displayName,
     email: currentUser.email,
-    email_verified: true,
+    email_verified: currentUser.emailVerified,
+    phone_number: currentUser.phoneNumber,
     sub: currentUser.uid,
     firebase: {
       identities: currentUser.providerData.reduce((acc, p) => {
