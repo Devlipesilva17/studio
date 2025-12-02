@@ -9,36 +9,81 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { DUMMY_PAYMENTS, DUMMY_VISITS } from "@/lib/placeholder-data";
+import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import type { Payment, Visit } from '@/lib/types';
+import { collectionGroup, query, where } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ReportsPage() {
-    const [chartData, setChartData] = React.useState<any[]>([]);
-    const [totalVisits, setTotalVisits] = React.useState(0);
-    const [totalRevenue, setTotalRevenue] = React.useState(0);
-    const [productsUsedCount, setProductsUsedCount] = React.useState(0);
+    const { user } = useUser();
+    const firestore = useFirestore();
 
-    React.useEffect(() => {
-        const data = [
-            { name: "Jan", total: Math.floor(Math.random() * 5000) + 1000 },
-            { name: "Fev", total: Math.floor(Math.random() * 5000) + 1000 },
-            { name: "Mar", total: Math.floor(Math.random() * 5000) + 1000 },
-            { name: "Abr", total: Math.floor(Math.random() * 5000) + 1000 },
-            { name: "Mai", total: Math.floor(Math.random() * 5000) + 1000 },
-            { name: "Jun", total: Math.floor(Math.random() * 5000) + 1000 },
-            { name: "Jul", total: Math.floor(Math.random() * 5000) + 1000 },
-            { name: "Ago", total: Math.floor(Math.random() * 5000) + 1000 },
-            { name: "Set", total: Math.floor(Math.random() * 5000) + 1000 },
-            { name: "Out", total: Math.floor(Math.random() * 5000) + 1000 },
-            { name: "Nov", total: Math.floor(Math.random() * 5000) + 1000 },
-            { name: "Dez", total: Math.floor(Math.random() * 5000) + 1000 },
-        ];
-        setChartData(data);
+    const visitsQuery = useMemoFirebase(() => {
+        if (!user || !firestore) return null;
+        return query(
+            collectionGroup(firestore, 'visits'),
+            where('userId', '==', user.uid),
+            where('status', '==', 'completed')
+        );
+    }, [user, firestore]);
 
-        setTotalVisits(DUMMY_VISITS.filter(v => v.status === 'completed').length);
-        setTotalRevenue(DUMMY_PAYMENTS.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0));
-        setProductsUsedCount(DUMMY_VISITS.flatMap(v => v.productsUsed).reduce((sum, p) => sum + p.quantity, 0));
+    const paymentsQuery = useMemoFirebase(() => {
+        if (!user || !firestore) return null;
+        return query(
+            collectionGroup(firestore, 'payments'),
+            where('userId', '==', user.uid),
+            where('status', '==', 'paid')
+        );
+    }, [user, firestore]);
 
-    }, []);
+    const { data: completedVisits, isLoading: areVisitsLoading } = useCollection<Visit>(visitsQuery);
+    const { data: paidPayments, isLoading: arePaymentsLoading } = useCollection<Payment>(paymentsQuery);
+    
+    const chartData = React.useMemo(() => {
+        const monthlyRevenue: { [key: string]: number } = { Jan: 0, Fev: 0, Mar: 0, Abr: 0, Mai: 0, Jun: 0, Jul: 0, Ago: 0, Set: 0, Out: 0, Nov: 0, Dez: 0 };
+        
+        if (paidPayments) {
+            paidPayments.forEach(payment => {
+                const month = new Date(payment.date).getMonth();
+                const monthName = Object.keys(monthlyRevenue)[month];
+                if (monthName) {
+                    monthlyRevenue[monthName] += payment.amount;
+                }
+            });
+        }
+        
+        return Object.entries(monthlyRevenue).map(([name, total]) => ({ name, total }));
+    }, [paidPayments]);
+
+    const totalVisits = completedVisits?.length || 0;
+    const totalRevenue = paidPayments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+    const productsUsedCount = completedVisits?.flatMap(v => v.productsUsed).reduce((sum, p) => sum + p.quantity, 0) || 0;
+    
+    const isLoading = areVisitsLoading || arePaymentsLoading;
+
+    if (isLoading) {
+        return (
+             <div className="flex flex-col gap-6">
+                <div className="flex items-center">
+                    <h1 className="text-lg font-semibold md:text-2xl font-headline">Relatórios</h1>
+                </div>
+                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <Card><CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader><CardContent><Skeleton className="h-10 w-1/2" /></CardContent></Card>
+                    <Card><CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader><CardContent><Skeleton className="h-10 w-1/2" /></CardContent></Card>
+                    <Card><-CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader><CardContent><Skeleton className="h-10 w-1/2" /></CardContent></Card>
+                </div>
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-8 w-1/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-[350px] w-full" />
+                    </CardContent>
+                </Card>
+            </div>
+        )
+    }
 
     return (
         <div className="flex flex-col gap-6">
