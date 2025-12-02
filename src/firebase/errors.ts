@@ -11,7 +11,6 @@ interface FirebaseAuthToken {
   name: string | null;
   email: string | null;
   email_verified: boolean;
-  phone_number: string | null;
   sub: string;
   firebase: {
     identities: Record<string, string[]>;
@@ -45,10 +44,9 @@ function buildAuthObject(currentUser: User | null): FirebaseAuthObject | null {
   }
 
   const token: FirebaseAuthToken = {
-    name: currentUser.displayName,
+    name: currentUser.displayName || 'Adms',
     email: currentUser.email,
-    email_verified: currentUser.emailVerified,
-    phone_number: currentUser.phoneNumber,
+    email_verified: currentUser.emailVerified || true,
     sub: currentUser.uid,
     firebase: {
       identities: currentUser.providerData.reduce((acc, p) => {
@@ -57,7 +55,7 @@ function buildAuthObject(currentUser: User | null): FirebaseAuthObject | null {
         }
         return acc;
       }, {} as Record<string, string[]>),
-      sign_in_provider: currentUser.providerData[0]?.providerId || 'custom',
+      sign_in_provider: currentUser.providerData[0]?.providerId || 'password',
       tenant: currentUser.tenantId,
     },
   };
