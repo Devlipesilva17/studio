@@ -24,6 +24,8 @@ import { getProductRecommendations } from '@/app/actions/get-recommendations';
 import type { ProductRecommendationsOutput } from '@/ai/flows/ai-product-recommendations';
 import { Loader2, WandSparkles } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
+import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
 
 const formSchema = z.object({
     clientId: z.string().min(1, { message: "Por favor, selecione um cliente." }),
@@ -35,14 +37,24 @@ const formSchema = z.object({
 
 type RecommendationFormProps = {
     clients: Client[];
-    pools: Pool[];
 }
 
-export function RecommendationForm({ clients, pools }: RecommendationFormProps) {
+export function RecommendationForm({ clients }: RecommendationFormProps) {
+    const { user } = useUser();
+    const firestore = useFirestore();
     const [selectedClientId, setSelectedClientId] = React.useState<string | null>(null);
     const [selectedPool, setSelectedPool] = React.useState<Pool | null>(null);
     const [recommendations, setRecommendations] = React.useState<ProductRecommendationsOutput | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
+
+    const poolsQuery = useMemoFirebase(() => {
+        if (!user?.uid || !firestore || !selectedClientId) return null;
+        return query(
+            collection(firestore, `users/${user.uid}/clients/${selectedClientId}/pools`)
+        );
+    }, [user?.uid, firestore, selectedClientId]);
+
+    const { data: pools, isLoading: arePoolsLoading } = useCollection<Pool>(poolsQuery);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -64,10 +76,13 @@ export function RecommendationForm({ clients, pools }: RecommendationFormProps) 
 
     const handlePoolChange = (poolId: string) => {
         form.setValue("poolId", poolId);
-        const pool = pools.find(p => p.id === poolId);
-        if (pool) {
-            setSelectedPool(pool);
-            form.setValue("lastTreatment", pool.lastTreatment || "");
+        if (pools) {
+            const pool = pools.find(p => p.id === poolId);
+            if (pool) {
+                setSelectedPool(pool);
+                form.setValue("lastTreatment", pool.lastTreatment || "");
+                if (pool.ph) form.setValue("pHLevel", pool.ph);
+            }
         }
     }
 
@@ -77,7 +92,7 @@ export function RecommendationForm({ clients, pools }: RecommendationFormProps) 
         setRecommendations(null);
 
         const input = {
-            poolSize: selectedPool.volume || selectedPool.size,
+            poolSize: selectedPool.volume || 0,
             poolType: selectedPool.material || 'fiber',
             lastTreatment: values.lastTreatment,
             algaeLevel: values.algaeLevel,
@@ -89,8 +104,6 @@ export function RecommendationForm({ clients, pools }: RecommendationFormProps) 
         setIsLoading(false);
     }
     
-    const clientPools = selectedClientId ? pools.filter(p => p.clientId === selectedClientId) : [];
-
     return (
         <div className="grid md:grid-cols-2 gap-8 items-start">
         <Card>
@@ -129,15 +142,15 @@ export function RecommendationForm({ clients, pools }: RecommendationFormProps) 
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Piscina</FormLabel>
-                                    <Select onValueChange={handlePoolChange} value={field.value} disabled={!selectedClientId}>
+                                    <Select onValueChange={handlePoolChange} value={field.value} disabled={!selectedClientId || arePoolsLoading}>
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Selecione uma piscina" />
+                                                <SelectValue placeholder={arePoolsLoading ? "Carregando piscinas..." : "Selecione uma piscina"} />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {clientPools.map(pool => (
-                                                <SelectItem key={pool.id} value={pool.id}>{pool.name} ({pool.volume || pool.size} L)</SelectItem>
+                                            {pools && pools.map(pool => (
+                                                <SelectItem key={pool.id} value={pool.id}>{pool.name} ({pool.volume || 0} L)</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>

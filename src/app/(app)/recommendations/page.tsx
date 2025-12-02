@@ -1,7 +1,31 @@
+'use client';
+
+import * as React from 'react';
 import { RecommendationForm } from "@/components/recommendations/recommendation-form";
-import { DUMMY_CLIENTS, DUMMY_POOLS } from "@/lib/placeholder-data";
+import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { collection, collectionGroup, query } from "firebase/firestore";
+import type { Client, Pool } from "@/lib/types";
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function RecommendationsPage() {
+    const { user } = useUser();
+    const firestore = useFirestore();
+
+    const clientsQuery = useMemoFirebase(() => {
+        if (!user?.uid || !firestore) return null;
+        return query(collection(firestore, `users/${user.uid}/clients`));
+    }, [user?.uid, firestore]);
+
+    const poolsQuery = useMemoFirebase(() => {
+        if (!user?.uid || !firestore) return null;
+        return query(collectionGroup(firestore, 'pools'));
+    }, [user?.uid, firestore]);
+
+    const { data: clients, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
+    const { data: pools, isLoading: arePoolsLoading } = useCollection<Pool>(poolsQuery);
+
+    const isLoading = areClientsLoading || arePoolsLoading;
+
     return (
         <div className="flex flex-col gap-6">
             <div className="flex items-center">
@@ -11,7 +35,14 @@ export default function RecommendationsPage() {
                 Selecione um cliente e piscina, depois descreva as condições atuais para obter recomendações de produtos com IA.
             </p>
 
-            <RecommendationForm clients={DUMMY_CLIENTS} pools={DUMMY_POOLS} />
+            {isLoading ? (
+                <div className="grid md:grid-cols-2 gap-8 items-start">
+                    <Skeleton className="h-[500px] w-full" />
+                    <Skeleton className="h-[500px] w-full" />
+                </div>
+            ) : (
+                <RecommendationForm clients={clients || []} />
+            )}
         </div>
     )
 }

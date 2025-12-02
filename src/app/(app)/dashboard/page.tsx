@@ -1,17 +1,11 @@
 'use client';
 
 import {
-    Activity,
     ArrowUpRight,
-    CircleUser,
+    CalendarCheck,
     CreditCard,
     DollarSign,
-    Menu,
-    Package2,
-    Search,
     Users,
-    Droplets,
-    CalendarCheck,
   } from "lucide-react"
   import Link from "next/link"
   import * as React from 'react';
@@ -38,31 +32,98 @@ import {
     TableHeader,
     TableRow,
   } from "@/components/ui/table"
-  import { DUMMY_CLIENTS, DUMMY_PAYMENTS, DUMMY_VISITS } from "@/lib/placeholder-data"
+  import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+  import { Client, Payment, Visit } from "@/lib/types";
+  import { collection, collectionGroup, query, where, limit, orderBy } from "firebase/firestore";
+  import { Skeleton } from "@/components/ui/skeleton";
   
   export default function Dashboard() {
-    const [todayVisits, setTodayVisits] = React.useState<typeof DUMMY_VISITS>([]);
-    const [upcomingVisits, setUpcomingVisits] = React.useState<typeof DUMMY_VISITS>([]);
-    const [totalRevenue, setTotalRevenue] = React.useState(0);
-    const [pendingPayments, setPendingPayments] = React.useState<typeof DUMMY_PAYMENTS>([]);
-    const [recentClients, setRecentClients] = React.useState<typeof DUMMY_CLIENTS>([]);
+    const { user } = useUser();
+    const firestore = useFirestore();
     const [locale, setLocale] = React.useState('pt-BR');
 
-
     React.useEffect(() => {
-        const todayString = new Date().toDateString();
-        setTodayVisits(DUMMY_VISITS.filter(v => new Date(v.scheduledDate).toDateString() === todayString && v.status === 'pending'));
-        setUpcomingVisits(DUMMY_VISITS.filter(v => new Date(v.scheduledDate) >= new Date()).slice(0, 5));
-        setTotalRevenue(DUMMY_PAYMENTS.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0));
-        setPendingPayments(DUMMY_PAYMENTS.filter(p => p.status === 'pending'));
-        setRecentClients(DUMMY_CLIENTS.slice(0, 5));
-        
-        // In a real app, you'd get this from user settings
         const userLocale = navigator.language || 'pt-BR';
         setLocale(userLocale);
-
     }, []);
-    
+
+    const todayString = new Date().toISOString().split('T')[0];
+
+    const visitsQuery = useMemoFirebase(() => {
+        if (!user?.uid || !firestore) return null;
+        return query(
+            collectionGroup(firestore, 'visits'),
+            where('userId', '==', user.uid),
+            where('date', '>=', todayString),
+            orderBy('date'),
+            orderBy('time'),
+            limit(5)
+        );
+    }, [user?.uid, firestore, todayString]);
+
+    const clientsQuery = useMemoFirebase(() => {
+        if (!user?.uid || !firestore) return null;
+        return query(
+            collection(firestore, `users/${user.uid}/clients`),
+            orderBy('createdAt', 'desc'),
+            limit(5)
+        );
+    }, [user?.uid, firestore]);
+
+    const paymentsQuery = useMemoFirebase(() => {
+        if (!user?.uid || !firestore) return null;
+        return query(
+            collectionGroup(firestore, 'payments'),
+            where('userId', '==', user.uid)
+        );
+    }, [user?.uid, firestore]);
+
+    const { data: upcomingVisits, isLoading: areVisitsLoading } = useCollection<Visit>(visitsQuery);
+    const { data: recentClients, isLoading: areClientsLoading } = useCollection<Client>(clientsQuery);
+    const { data: payments, isLoading: arePaymentsLoading } = useCollection<Payment>(paymentsQuery);
+
+    const dashboardData = React.useMemo(() => {
+        if (!payments) return { totalRevenue: 0, pendingPayments: [], pendingAmount: 0 };
+
+        const totalRevenue = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
+        const pendingPayments = payments.filter(p => p.status === 'pending');
+        const pendingAmount = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
+        return { totalRevenue, pendingPayments, pendingAmount };
+    }, [payments]);
+
+    const todayVisitsCount = upcomingVisits?.filter(v => v.date === todayString).length || 0;
+    const isLoading = areVisitsLoading || areClientsLoading || arePaymentsLoading;
+
+    if (isLoading) {
+        return (
+             <div className="flex flex-col gap-6">
+                <div className="flex items-center">
+                    <h1 className="text-lg font-semibold md:text-2xl font-headline">Dashboard</h1>
+                </div>
+                 <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+                    <Card><CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader><CardContent><Skeleton className="h-10 w-1/2" /></CardContent></Card>
+                    <Card><CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader><CardContent><Skeleton className="h-10 w-1/2" /></CardContent></Card>
+                    <Card><CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader><CardContent><Skeleton className="h-10 w-1/2" /></CardContent></Card>
+                    <Card><CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader><CardContent><Skeleton className="h-10 w-1/2" /></CardContent></Card>
+                </div>
+                <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+                    <Card className="xl:col-span-2">
+                        <CardHeader><Skeleton className="h-8 w-1/4" /><Skeleton className="h-4 w-1/2" /></CardHeader>
+                        <CardContent><Skeleton className="h-[200px] w-full" /></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader><Skeleton className="h-8 w-1/3" /><Skeleton className="h-4 w-3/4" /></CardHeader>
+                        <CardContent className="grid gap-8">
+                            <Skeleton className="h-12 w-full" />
+                            <Skeleton className="h-12 w-full" />
+                            <Skeleton className="h-12 w-full" />
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <>
             <div className="flex items-center">
@@ -77,7 +138,7 @@ import {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2}) }</div>
+                <div className="text-2xl font-bold">R$ {dashboardData.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2}) }</div>
                 <p className="text-xs text-muted-foreground">
                   +20.1% do último mês
                 </p>
@@ -91,7 +152,7 @@ import {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">+{DUMMY_CLIENTS.length}</div>
+                <div className="text-2xl font-bold">+{recentClients?.length || 0}</div>
                 <p className="text-xs text-muted-foreground">
                   +2 desde o último mês
                 </p>
@@ -103,9 +164,9 @@ import {
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{pendingPayments.length}</div>
+                <div className="text-2xl font-bold">{dashboardData.pendingPayments.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  R$ {pendingPayments.reduce((sum, p) => sum + p.amount, 0).toLocaleString('pt-BR')} pendentes
+                  R$ {dashboardData.pendingAmount.toLocaleString('pt-BR')} pendentes
                 </p>
               </CardContent>
             </Card>
@@ -115,7 +176,7 @@ import {
                 <CalendarCheck className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{todayVisits.length}</div>
+                <div className="text-2xl font-bold">{todayVisitsCount}</div>
                 <p className="text-xs text-muted-foreground">
                   agendadas para hoje
                 </p>
@@ -153,7 +214,7 @@ import {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {upcomingVisits.map(visit => (
+                    {upcomingVisits && upcomingVisits.map(visit => (
                         <TableRow key={visit.id}>
                             <TableCell>
                                 <div className="font-medium">{visit.clientName}</div>
@@ -176,12 +237,12 @@ import {
             <Card>
               <CardHeader>
                 <CardTitle>Clientes Recentes</CardTitle>
-                <CardDescription>
-                  Você tem {DUMMY_CLIENTS.length} clientes ativos.
-                </CardDescription>
+                {recentClients && <CardDescription>
+                  Você tem {recentClients.length} clientes ativos.
+                </CardDescription>}
               </CardHeader>
               <CardContent className="grid gap-8">
-                {recentClients.map(client => (
+                {recentClients && recentClients.map(client => (
                     <div key={client.id} className="flex items-center gap-4">
                         <Avatar className="hidden h-9 w-9 sm:flex">
                         <AvatarImage src={client.avatarUrl} alt="Avatar" />
