@@ -487,13 +487,15 @@ export default function SchedulePage() {
           </div>
         )}
       </div>
-      <React.Suspense fallback={<div className='fixed inset-0 bg-black/50 flex items-center justify-center'><Skeleton className='h-96 w-full max-w-lg' /></div>}>
-        <VisitEditDialog
-          visit={selectedVisit}
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-        />
-      </React.Suspense>
+      {isEditDialogOpen && (
+        <React.Suspense fallback={<div className='fixed inset-0 bg-black/50 flex items-center justify-center'><Skeleton className='h-96 w-full max-w-lg' /></div>}>
+            <VisitEditDialog
+            visit={selectedVisit}
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            />
+        </React.Suspense>
+      )}
     </>
   );
 }
