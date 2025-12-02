@@ -1,6 +1,7 @@
 
 'use client';
 import * as React from 'react';
+import dynamic from 'next/dynamic';
 import { File, ListFilter, MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,7 +53,10 @@ import {
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const ProductEditDialog = React.lazy(() => import('@/components/products/product-edit-dialog').then(module => ({ default: module.ProductEditDialog })));
+const ProductEditDialog = dynamic(() => import('@/components/products/product-edit-dialog').then(module => ({ default: module.ProductEditDialog })), {
+    ssr: false,
+    loading: () => <div className='fixed inset-0 bg-black/50 flex items-center justify-center'><Skeleton className='h-96 w-full max-w-md' /></div>
+});
 
 
 export default function ProductsPage() {
@@ -295,15 +299,13 @@ export default function ProductsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-       <React.Suspense fallback={<div className='fixed inset-0 bg-black/50 flex items-center justify-center'><Skeleton className='h-96 w-full max-w-md' /></div>}>
-        <ProductEditDialog
-          product={selectedProduct}
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-        />
-      </React.Suspense>
+       {isEditDialogOpen && (
+          <ProductEditDialog
+            product={selectedProduct}
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+          />
+       )}
     </>
   );
 }
-
-    

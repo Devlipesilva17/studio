@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { Clipboard, File, ListFilter, MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,7 +38,10 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { collection, query } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const ClientEditDialog = React.lazy(() => import('@/components/clients/client-edit-dialog').then(module => ({ default: module.ClientEditDialog })));
+const ClientEditDialog = dynamic(() => import('@/components/clients/client-edit-dialog').then(module => ({ default: module.ClientEditDialog })), {
+    ssr: false,
+    loading: () => <div className='fixed inset-0 bg-black/50 flex items-center justify-center'><Skeleton className='h-96 w-full max-w-md' /></div>
+});
 
 
 export default function ClientsPage() {
@@ -226,14 +230,14 @@ export default function ClientsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-      <React.Suspense fallback={<div className='fixed inset-0 bg-black/50 flex items-center justify-center'><Skeleton className='h-96 w-full max-w-md' /></div>}>
-        <ClientEditDialog
-          client={selectedClient}
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          onClientUpdate={handleClientUpdate}
-        />
-      </React.Suspense>
+      {isEditDialogOpen && (
+          <ClientEditDialog
+            client={selectedClient}
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            onClientUpdate={handleClientUpdate}
+          />
+      )}
     </>
   );
 }

@@ -1,7 +1,9 @@
 
+
 'use client';
 
 import * as React from 'react';
+import dynamic from 'next/dynamic';
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -64,8 +66,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const QuickEditDialog = React.lazy(() => import('@/components/schedule/quick-edit-dialog').then(module => ({ default: module.QuickEditDialog })));
-const VisitEditDialog = React.lazy(() => import('@/components/schedule/visit-edit-dialog').then(module => ({ default: module.VisitEditDialog })));
+const QuickEditDialog = dynamic(() => import('@/components/schedule/quick-edit-dialog').then(module => ({ default: module.QuickEditDialog })), { ssr: false });
+const VisitEditDialog = dynamic(() => import('@/components/schedule/visit-edit-dialog').then(module => ({ default: module.VisitEditDialog })), { 
+    ssr: false,
+    loading: () => <div className='fixed inset-0 bg-black/50 flex items-center justify-center'><Skeleton className='h-96 w-full max-w-lg' /></div>
+});
 
 export default function SchedulePage() {
   const { user } = useUser();
@@ -488,13 +493,11 @@ export default function SchedulePage() {
         )}
       </div>
       {isEditDialogOpen && (
-        <React.Suspense fallback={<div className='fixed inset-0 bg-black/50 flex items-center justify-center'><Skeleton className='h-96 w-full max-w-lg' /></div>}>
-            <VisitEditDialog
+        <VisitEditDialog
             visit={selectedVisit}
             open={isEditDialogOpen}
             onOpenChange={setIsEditDialogOpen}
-            />
-        </React.Suspense>
+        />
       )}
     </>
   );
