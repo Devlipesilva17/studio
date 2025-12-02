@@ -45,7 +45,7 @@ const AlertDialogContent = React.forwardRef<
 ))
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName
 
-const AlertDialogHeader = ({
+const AlertDialogHeader = React.memo(({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
@@ -56,10 +56,10 @@ const AlertDialogHeader = ({
     )}
     {...props}
   />
-)
+))
 AlertDialogHeader.displayName = "AlertDialogHeader"
 
-const AlertDialogFooter = ({
+const AlertDialogFooter = React.memo(({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
@@ -70,7 +70,7 @@ const AlertDialogFooter = ({
     )}
     {...props}
   />
-)
+))
 AlertDialogFooter.displayName = "AlertDialogFooter"
 
 const AlertDialogTitle = React.forwardRef<
