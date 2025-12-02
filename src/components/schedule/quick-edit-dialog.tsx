@@ -38,7 +38,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import {
-  useFirebase,
+  useUser,
+  useFirestore,
   useDoc,
   useCollection,
   useMemoFirebase,
@@ -48,27 +49,31 @@ import type { Visit, Pool, Product } from '@/lib/types';
 import { Clipboard, Loader2, PlusCircle, Trash2 } from 'lucide-react';
 
 function QuickEditDialog({ visit }: { visit: Visit }) {
-  const { user, firestore } = useFirebase();
+  const { user } = useUser();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [isProductPopoverOpen, setIsProductPopoverOpen] = React.useState(false);
 
   const poolRef = useMemoFirebase(() => {
-    if (!user || !firestore || !visit || !visit.poolId) return null;
+    // Lazy fetching: only create ref if dialog is open
+    if (!isOpen || !user || !firestore || !visit || !visit.poolId) return null;
     return doc(
       firestore,
       `users/${user.uid}/clients/${visit.clientId}/pools`,
       visit.poolId
     );
-  }, [user, firestore, visit]);
+  }, [isOpen, user, firestore, visit]);
 
   const { data: poolData, isLoading: isPoolLoading } = useDoc<Pool>(poolRef);
 
   const productsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    // Lazy fetching: only create query if dialog is open
+    if (!isOpen || !firestore) return null;
     return query(collection(firestore, 'products'));
-  }, [firestore]);
+  }, [isOpen, firestore]);
+  
   const { data: productList, isLoading: areProductsLoading } =
     useCollection<Product>(productsQuery);
 
