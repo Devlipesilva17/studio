@@ -33,6 +33,7 @@ import {
   useFirestore,
   useCollection,
   useUser,
+  useMemoFirebase,
 } from '@/firebase';
 import { collection, query, deleteDoc, doc } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
@@ -64,7 +65,7 @@ export default function ProductsPage() {
   );
   const [filter, setFilter] = React.useState('all');
 
-  const productsQuery = React.useMemo(() => {
+  const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'products'));
   }, [firestore]);
@@ -228,7 +229,7 @@ export default function ProductsPage() {
                             <Badge variant={stockStatus.variant}>{stockStatus.text}</Badge>
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
-                            R$ {product.cost.toFixed(2).replace('.', ',')}
+                            R$ {(product.cost || 0).toFixed(2).replace('.', ',')}
                           </TableCell>
                           <TableCell className={cn("hidden md:table-cell text-right font-bold", stockStatus.status === 'in-stock' ? 'text-green-600' : stockStatus.status === 'low-stock' ? 'text-amber-600' : 'text-red-600')}>
                             {product.stock}
